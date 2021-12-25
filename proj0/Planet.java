@@ -6,7 +6,7 @@ public class Planet {
     public double xxVel;
     public double yyVel;
     public double mass;
-    String imgFileName;
+    public String imgFileName;
     static final double G = 6.67e-11;
 
     public Planet(double xP, double yP, double xV,
@@ -50,30 +50,30 @@ public class Planet {
     }
 
     public double calcNetForceExertedByX(Planet[] plants) {
-        double net_force = 0;
+        double netForce = 0;
         for (Planet planet : plants) {
             if (!this.equals(planet)) {
-                net_force += this.calcForceExertedByX(planet);
+                netForce += this.calcForceExertedByX(planet);
             }
         }
-        return net_force;
+        return netForce;
     }
 
     public double calcNetForceExertedByY(Planet[] plants) {
-        double net_force = 0;
+        double netForce = 0;
         for (Planet planet : plants) {
             if (!this.equals(planet)) {
-                net_force += this.calcForceExertedByY(planet);
+                netForce += this.calcForceExertedByY(planet);
             }
         }
-        return net_force;
+        return netForce;
     }
 
-    public void update(double time, double x_force, double y_force) {
-        double acceleration_x = x_force / mass;
-        double acceleration_y = y_force / mass;
-        xxVel += acceleration_x * time;
-        yyVel += acceleration_y * time;
+    public void update(double time, double xForce, double yForce) {
+        double accelerationX = xForce / mass;
+        double accelerationY = yForce / mass;
+        xxVel += accelerationX * time;
+        yyVel += accelerationY * time;
         xxPos += xxVel * time;
         yyPos += yyVel * time;
     }
@@ -82,3 +82,4 @@ public class Planet {
         StdDraw.picture(xxPos, yyPos, "images/" + imgFileName);
     }
 }
+
