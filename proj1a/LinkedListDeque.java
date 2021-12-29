@@ -1,13 +1,11 @@
-import java.util.Enumeration;
-
 public class LinkedListDeque<T> {
 
     private class Node {
-        public T item;
-        public Node prev;
-        public Node next;
+        T item;
+        Node prev;
+        Node next;
 
-        public Node(T i, Node p, Node n) {
+        Node(T i, Node p, Node n) {
             item = i;
             prev = p;
             next = n;
@@ -53,21 +51,27 @@ public class LinkedListDeque<T> {
     }
 
     public T removeFirst() {
-        T result = sentinel.next.item;
-        sentinel.next.item = null;
-        sentinel.next = sentinel.next.next;
-        sentinel.next.prev = sentinel;
-        size--;
-        return result;
+        if (sentinel.next != sentinel) {
+            T result = sentinel.next.item;
+            sentinel.next.item = null;
+            sentinel.next = sentinel.next.next;
+            sentinel.next.prev = sentinel;
+            size--;
+            return result;
+        }
+        return null;
     }
 
     public T removeLast() {
-        T result = sentinel.prev.item;
-        sentinel.prev.item = null;
-        sentinel.prev = sentinel.prev.prev;
-        sentinel.prev.next = sentinel;
-        size--;
-        return result;
+        if (sentinel.prev != sentinel) {
+            T result = sentinel.prev.item;
+            sentinel.prev.item = null;
+            sentinel.prev = sentinel.prev.prev;
+            sentinel.prev.next = sentinel;
+            size--;
+            return result;
+        }
+        return null;
     }
 
     public void printDeque() {
