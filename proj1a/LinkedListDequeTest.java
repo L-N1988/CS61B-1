@@ -35,8 +35,8 @@ public class LinkedListDequeTest {
       * && is the "and" operation. */
     public static void addIsEmptySizeGetTest() {
         System.out.println("Running add/isEmpty/Size test.");
-
-        LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
+        ArrayDeque<String> lld1 = new ArrayDeque<String>();
+//        LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
 
         boolean passed = checkEmpty(true, lld1.isEmpty());
 
@@ -58,6 +58,10 @@ public class LinkedListDequeTest {
         System.out.println("Printing out deque: ");
         lld1.printDeque();
 
+        lld1.addLast("1");
+        lld1.addLast("2");
+        lld1.addLast("3");  // Java Visualizer
+
         printTestStatus(passed);
 
     }
@@ -66,8 +70,8 @@ public class LinkedListDequeTest {
     public static void addRemoveTest() {
 
         System.out.println("Running add/remove test.");
-
-        LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
+        ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
+//        LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
         // should be empty
         boolean passed = checkEmpty(true, lld1.isEmpty());
 
