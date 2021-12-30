@@ -60,8 +60,10 @@ public class LinkedListDequeTest {
 
         lld1.addLast("1");
         lld1.addLast("2");
+        lld1.addLast("3");
+        lld1.addLast("1");
+        lld1.addLast("2");
         lld1.addLast("3");  // Java Visualizer
-
         printTestStatus(passed);
 
     }

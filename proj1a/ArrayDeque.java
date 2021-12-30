@@ -4,6 +4,7 @@ public class ArrayDeque<T> {
     private int nextFirst;
     private int nextLast;
     private int length;
+
     public ArrayDeque() {
         length = 8;
         items = (T[]) (new Object[length]);
@@ -25,17 +26,34 @@ public class ArrayDeque<T> {
     }
 
     public void addFirst(T item) {
-        // TODO: if full, resize, else:
+        if (nextFirst == nextLast) {
+            resize(length * 2);
+        }
         items[nextFirst] = item;
         nextFirst = getIndex(nextFirst - 1);
         size++;
     }
 
     public void addLast(T item) {
-        // TODO: if full, resize, else:
+        if (nextFirst == nextLast) {
+            resize(length * 2);
+        }
         items[nextLast] = item;
         nextLast = getIndex(nextLast + 1);
         size++;
+    }
+
+    /**
+     * Resizes the underlying array to the target capacity.
+     */
+    private void resize(int capacity) {
+        T[] a = (T[]) new Object[capacity];
+        System.arraycopy(items, getIndex(nextFirst + 1), a, 0, length - getIndex(nextFirst + 1));
+        System.arraycopy(items, 0, a, length - getIndex(nextFirst + 1), getIndex(nextLast - 1) + 1);
+        length = capacity;
+        nextFirst = getIndex(-1);
+        nextLast = size;
+        items = a;
     }
 
     public T removeFirst() {
@@ -45,6 +63,9 @@ public class ArrayDeque<T> {
             items[nextIndex] = null;
             nextFirst = nextIndex;
             size--;
+        }
+        if (size < 0.25 * length && length > 16) {
+            resize(length / 2);
         }
         return result;
     }
@@ -56,6 +77,9 @@ public class ArrayDeque<T> {
             items[nextIndex] = null;
             nextLast = getIndex(nextLast - 1);
             size--;
+        }
+        if (size < 0.25 * length && length > 16) {
+            resize(length / 2);
         }
         return result;
     }
