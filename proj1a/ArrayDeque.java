@@ -48,8 +48,12 @@ public class ArrayDeque<T> {
      */
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
-        System.arraycopy(items, getIndex(nextFirst + 1), a, 0, length - getIndex(nextFirst + 1));
-        System.arraycopy(items, 0, a, length - getIndex(nextFirst + 1), getIndex(nextLast - 1) + 1);
+        if (capacity > length || nextFirst > nextLast) {
+            System.arraycopy(items, getIndex(nextFirst + 1), a, 0, length - getIndex(nextFirst + 1));
+            System.arraycopy(items, 0, a, length - getIndex(nextFirst + 1), getIndex(nextLast - 1) + 1);
+        } else {
+            System.arraycopy(items, getIndex(nextFirst + 1), a, 0, size);
+        }
         length = capacity;
         nextFirst = getIndex(-1);
         nextLast = size;
