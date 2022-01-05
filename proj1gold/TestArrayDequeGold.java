@@ -9,7 +9,7 @@ public class TestArrayDequeGold {
     public void test() {
         StudentArrayDeque<Integer> sad = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> sol = new ArrayDequeSolution<>();
-        for (int i = 0; i < 200; i += 1) {
+        for (int i = 0; i < 400; i += 1) {
             double randomNumber = StdRandom.uniform();
             if (randomNumber < 0.5) {
                 if (!sol.isEmpty() && randomNumber < 0.25) {
