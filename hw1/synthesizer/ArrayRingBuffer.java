@@ -71,6 +71,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
             throw new RuntimeException("Ring Buffer Underflow");
         }
     }
+
     @Override
     public Iterator<T> iterator() {
         return new BufferIterator();

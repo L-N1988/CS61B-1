@@ -17,7 +17,7 @@ public class GuitarString {
     public GuitarString(double frequency) {
         int capacity = (int) Math.round(SR / frequency);
         buffer = new ArrayRingBuffer<Double>(capacity);
-        for (int i = 0; i < capacity; i++) {
+        for (int i = 0; i < buffer.capacity(); i++) {
             buffer.enqueue(0.0);
         }
         // Create a buffer with capacity = SR / frequency. You'll need to
@@ -28,13 +28,9 @@ public class GuitarString {
 
     /* Pluck the guitar string by replacing the buffer with white noise. */
     public void pluck() {
-        int n = 0;
-        while (!buffer.isEmpty()) {
-            buffer.dequeue();
-            n++;
-        }
         double old = -1;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < buffer.capacity(); i++) {
+            buffer.dequeue();
             double r = Math.random() - 0.5;
             while (r == old) {
                 r = Math.random() - 0.5;
@@ -55,8 +51,8 @@ public class GuitarString {
     public void tic() {
         double first = buffer.dequeue();
         double second = buffer.peek();
-        double newNumber = (first + second) / 2 * DECAY;
-        buffer.enqueue(newNumber);
+        double newSample = (first + second) / 2 * DECAY;
+        buffer.enqueue(newSample);
         // Dequeue the front sample and enqueue a new sample that is
         // the average of the two multiplied by the DECAY factor.
         // Do not call StdAudio.play().
