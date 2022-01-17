@@ -32,13 +32,11 @@ public class Game {
         // Fill out this method to run the game using the input passed in,
         // and return a 2D tile representation of the world that would have been
         // drawn if the same inputs had been given to playWithKeyboard().
-        ter.initialize(WIDTH, HEIGHT);
         input = input.toUpperCase();
         if (input.endsWith("S") && input.startsWith("N")) {
-            Long seed = Long.parseLong(input.substring(1, input.length() - 1));
+            long seed = Long.parseLong(input.substring(1, input.length() - 1));
             MapGenerator mg = new MapGenerator(WIDTH, HEIGHT, seed);
             TETile[][] finalWorldFrame = mg.generate();
-            ter.renderFrame(finalWorldFrame);
             return finalWorldFrame;
         }
         return null;
