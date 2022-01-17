@@ -24,15 +24,23 @@ public class Game {
      * world. However, the behavior is slightly different. After playing with "n123sss:q", the game
      * should save, and thus if we then called playWithInputString with the string "l", we'd expect
      * to get the exact same world back again, since this corresponds to loading the saved game.
+     *
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] playWithInputString(String input) {
-        // TODO: Fill out this method to run the game using the input passed in,
+        // Fill out this method to run the game using the input passed in,
         // and return a 2D tile representation of the world that would have been
         // drawn if the same inputs had been given to playWithKeyboard().
-
-        TETile[][] finalWorldFrame = null;
-        return finalWorldFrame;
+        if (input.endsWith("S") && input.startsWith("N")) {
+            Long seed = Long.parseLong(input.substring(1, input.length() - 1));
+            TERenderer ter = new TERenderer();
+            ter.initialize(WIDTH, HEIGHT);
+            MapGenerator mg = new MapGenerator(WIDTH, HEIGHT, seed);
+            TETile[][] finalWorldFrame = mg.generate();
+            ter.renderFrame(finalWorldFrame);
+            return finalWorldFrame;
+        }
+        return null;
     }
 }

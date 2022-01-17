@@ -90,6 +90,19 @@ public class RandomUtils {
     }
 
     /**
+     * Returns a random integer uniformly in [a, b).
+     *
+     * @param a the left endpoint
+     * @param b the right endpoint
+     * @return a random integer uniformly in [a, b]
+     * @throws IllegalArgumentException if {@code b <= a}
+     * @throws IllegalArgumentException if {@code b - a >= Integer.MAX_VALUE}
+     */
+    public static int uniformInclusive(Random random, int a, int b) {
+        return uniform(random, a, b + 1);
+    }
+
+    /**
      * Returns a random real number uniformly in [a, b).
      *
      * @param a the left endpoint
