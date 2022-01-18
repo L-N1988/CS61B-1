@@ -1,6 +1,5 @@
 package byog.Core;
 
-import byog.TileEngine.TERenderer;
 import byog.TileEngine.TETile;
 import byog.TileEngine.Tileset;
 
@@ -17,7 +16,7 @@ public class World implements Serializable {
     private Random RANDOM;
     private int height;
     private int width;
-    public boolean gameOver = false;
+    boolean gameOver = false;
 
     public World(TETile[][] map, long seed) {
         this.map = map;
@@ -53,21 +52,21 @@ public class World implements Serializable {
 
         public Player() {
             t = TETile.colorVariant(Tileset.PLAYER, 64, 64, 64, RANDOM);
-            int x = uniform(RANDOM, 0, width);
-            int y = uniform(RANDOM, 0, height);
-            while (x < width && y < height) {
-                if (map[x][y].character() == Tileset.FLOOR.character()) {
-                    this.x = x;
-                    this.y = y;
+            int xi = uniform(RANDOM, 0, width);
+            int yi = uniform(RANDOM, 0, height);
+            while (xi < width && yi < height) {
+                if (map[xi][yi].character() == Tileset.FLOOR.character()) {
+                    this.x = xi;
+                    this.y = yi;
                     break;
                 }
-                y++;
-                if (y == height) {
-                    x++;
-                    y = 0;
+                yi++;
+                if (yi == height) {
+                    xi++;
+                    yi = 0;
                 }
-                if (x == width) {
-                    x = 0;
+                if (xi == width) {
+                    xi = 0;
                 }
             }
 

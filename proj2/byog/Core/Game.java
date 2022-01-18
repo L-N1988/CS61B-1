@@ -3,17 +3,22 @@ package byog.Core;
 import byog.TileEngine.TERenderer;
 import byog.TileEngine.TETile;
 import edu.princeton.cs.introcs.StdDraw;
-
-import java.awt.*;
-import java.io.*;
-import java.util.Locale;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.awt.Color;
+import java.awt.Font;
 
 public class Game {
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 60;
     public static final int HEIGHT = 30;
-    public static final int hudOffset = 2;
+    public static final int HUD_OFFSET = 2;
 
     /**
      * Method used for playing a fresh game. The game should start from the main menu.
@@ -28,7 +33,7 @@ public class Game {
                 switch (c) {
                     case 'n':
                         long seed = solicitSeedInput();
-                        MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - hudOffset, seed);
+                        MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - HUD_OFFSET, seed);
                         TETile[][] map = mg.generate();
                         World world = new World(map, seed);
                         System.out.println(TETile.toString(map));
@@ -57,7 +62,7 @@ public class Game {
     }
 
     private static World loadWorld() {
-        File f = new File("./world.ser");
+        File f = new File("world.ser");
         if (f.exists()) {
             try {
                 FileInputStream fs = new FileInputStream(f);
@@ -82,7 +87,7 @@ public class Game {
 
 
     private static void saveWorld(World w) {
-        File f = new File("./world.ser");
+        File f = new File("world.ser");
         try {
             if (!f.exists()) {
                 f.createNewFile();
@@ -136,7 +141,7 @@ public class Game {
         String info;
         int xPosition = (int) x;
         int yPosition = (int) y;
-        if (yPosition < HEIGHT - hudOffset) {
+        if (yPosition < HEIGHT - HUD_OFFSET) {
             info = world.map[xPosition][yPosition].description();
         } else {
             info = "nothing";
@@ -234,7 +239,7 @@ public class Game {
         if (input.startsWith("n")) {
             int sIndex = input.indexOf("s");
             long seed = Long.parseLong(input.substring(1, sIndex));
-            MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - hudOffset, seed);
+            MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - HUD_OFFSET, seed);
             TETile[][] map = mg.generate();
             World initWorld = new World(map, seed);
             World world = parseInputString(initWorld, input.substring(sIndex + 1, input.length()));
