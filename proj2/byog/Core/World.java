@@ -9,41 +9,6 @@ import java.util.Random;
 import static byog.Core.RandomUtils.uniform;
 
 public class World implements Serializable {
-    private static final long serialVersionUID = 1231231231L;
-    TETile[][] map;
-    private Player player;
-    private TETile replacedTile;
-    private Random RANDOM;
-    private int height;
-    private int width;
-    boolean gameOver = false;
-
-    public World(TETile[][] map, long seed) {
-        this.map = map;
-        this.height = map[0].length;
-        this.width = map.length;
-        RANDOM = new Random(seed);
-        player = new Player();
-    }
-
-    public void controlPlayer(Character c) {
-        switch (c) {
-            case 'w':
-                player.move(0, 1);
-                break;
-            case 'a':
-                player.move(-1, 0);
-                break;
-            case 's':
-                player.move(0, -1);
-                break;
-            case 'd':
-                player.move(1, 0);
-                break;
-            default:
-        }
-    }
-
     public class Player implements Serializable {
         private static final long serialVersionUID = 20000000311L;
         int x;
@@ -96,7 +61,41 @@ public class World implements Serializable {
                 gameOver = true;
             }
         }
-
-
     }
+
+    private static final long serialVersionUID = 1231231231L;
+    TETile[][] map;
+    private Player player;
+    private TETile replacedTile;
+    private Random RANDOM;
+    private int height;
+    private int width;
+    boolean gameOver = false;
+
+    public World(TETile[][] map, long seed) {
+        this.map = map;
+        this.height = map[0].length;
+        this.width = map.length;
+        RANDOM = new Random(seed);
+        player = new Player();
+    }
+
+    public void controlPlayer(Character c) {
+        switch (c) {
+            case 'w':
+                player.move(0, 1);
+                break;
+            case 'a':
+                player.move(-1, 0);
+                break;
+            case 's':
+                player.move(0, -1);
+                break;
+            case 'd':
+                player.move(1, 0);
+                break;
+            default:
+        }
+    }
+
 }

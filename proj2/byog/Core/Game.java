@@ -3,6 +3,7 @@ package byog.Core;
 import byog.TileEngine.TERenderer;
 import byog.TileEngine.TETile;
 import edu.princeton.cs.introcs.StdDraw;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -39,17 +40,15 @@ public class Game {
                         System.out.println(TETile.toString(map));
                         startGame(world);
                         drawGameOver();
-                        StdDraw.pause(1500);
-                        drawMenu();
                         break;
                     case 'l':
-                        World w = loadWorld();
-                        if (!w.equals(null)) {
+                        try {
+                            World w = loadWorld();
                             System.out.println(TETile.toString(w.map));
                             startGame(w);
                             drawGameOver();
-                            StdDraw.pause(1500);
-                            drawMenu();
+                        } catch (NullPointerException e) {
+                            System.out.println("No Archives, " + e);
                         }
                         break;
                     case 'q':
@@ -61,8 +60,38 @@ public class Game {
         }
     }
 
+
+    private void startGame(World world) {
+        ter.initialize(WIDTH, HEIGHT, 0, 0);
+        boolean quitFlag = false;
+        while (!world.gameOver) {
+            displayInformation(world);
+            if (StdDraw.hasNextKeyTyped()) {
+                char c = StdDraw.nextKeyTyped();
+                c = Character.toLowerCase(c);
+                if (isControlCommand(c)) {
+                    world.controlPlayer(c);
+                }
+                if (c == ':') {
+                    quitFlag = true;
+                } else if (quitFlag) {
+                    if (c == 'q') {
+                        saveWorld(world);
+                        System.exit(0);
+                    } else {
+                        quitFlag = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isControlCommand(Character c) {
+        return c == 'w' || c == 'a' || c == 's' || c == 'd';
+    }
+
     private static World loadWorld() {
-        File f = new File("world.ser");
+        File f = new File("./world.txt");
         if (f.exists()) {
             try {
                 FileInputStream fs = new FileInputStream(f);
@@ -87,7 +116,7 @@ public class Game {
 
 
     private static void saveWorld(World w) {
-        File f = new File("world.ser");
+        File f = new File("./world.txt");
         try {
             if (!f.exists()) {
                 f.createNewFile();
@@ -105,42 +134,10 @@ public class Game {
         }
     }
 
-    private boolean isControlCommand(Character c) {
-        return c == 'w' || c == 'a' || c == 's' || c == 'd';
-    }
-
-    private void startGame(World world) {
-        ter.initialize(WIDTH, HEIGHT, 0, 0);
-        boolean quitFlag = false;
-        displayInformation(world);
-        while (!world.gameOver) {
-            if (StdDraw.hasNextKeyTyped()) {
-                char c = StdDraw.nextKeyTyped();
-                c = Character.toLowerCase(c);
-                if (isControlCommand(c)) {
-                    world.controlPlayer(c);
-                }
-                if (c == ':') {
-                    quitFlag = true;
-                } else if (quitFlag) {
-                    if (c == 'q') {
-                        saveWorld(world);
-                        System.exit(0);
-                    } else {
-                        quitFlag = false;
-                    }
-                }
-            }
-            displayInformation(world);
-        }
-    }
-
     private void displayInformation(World world) {
-        double x = StdDraw.mouseX();
-        double y = StdDraw.mouseY();
         String info;
-        int xPosition = (int) x;
-        int yPosition = (int) y;
+        int xPosition = (int) StdDraw.mouseX();
+        int yPosition = (int) StdDraw.mouseY();
         if (yPosition < HEIGHT - HUD_OFFSET) {
             info = world.map[xPosition][yPosition].description();
         } else {
@@ -169,33 +166,6 @@ public class Game {
         }
     }
 
-    private void drawSeed(String input) {
-        int midWidth = WIDTH / 2;
-        int midHeight = HEIGHT / 2;
-        StdDraw.clear();
-        StdDraw.clear(Color.black);
-        StdDraw.setPenColor(Color.white);
-        Font largeFont = new Font("Monaco", Font.BOLD, 20);
-        StdDraw.setFont(largeFont);
-        StdDraw.text(midWidth, midHeight + 2, "Place input a seed (End with 'S')");
-        Font smallFont = new Font("Monaco", Font.BOLD, 19);
-        StdDraw.setFont(smallFont);
-        StdDraw.text(midWidth, midHeight - 1, input);
-        StdDraw.show();
-    }
-
-    private void drawGameOver() {
-        int midWidth = WIDTH / 2;
-        int midHeight = HEIGHT / 2;
-        StdDraw.clear();
-        StdDraw.clear(Color.black);
-        StdDraw.setPenColor(Color.white);
-        Font largeFont = new Font("Monaco", Font.BOLD, 20);
-        StdDraw.setFont(largeFont);
-        StdDraw.text(midWidth, midHeight, "Good job, you left the place.");
-        StdDraw.show();
-    }
-
     private void init() {
         StdDraw.setCanvasSize(WIDTH * 16, HEIGHT * 16);
         StdDraw.setXscale(0, WIDTH);
@@ -221,6 +191,46 @@ public class Game {
         StdDraw.show();
     }
 
+    private void drawSeed(String input) {
+        int midWidth = WIDTH / 2;
+        int midHeight = HEIGHT / 2;
+        StdDraw.clear(Color.black);
+        StdDraw.setPenColor(Color.white);
+        Font largeFont = new Font("Monaco", Font.BOLD, 20);
+        StdDraw.setFont(largeFont);
+        StdDraw.text(midWidth, midHeight + 2, "Place input a seed (End with 'S')");
+        Font smallFont = new Font("Monaco", Font.BOLD, 19);
+        StdDraw.setFont(smallFont);
+        StdDraw.text(midWidth, midHeight - 1, input);
+        StdDraw.show();
+    }
+
+    private void drawGameOver() {
+        int midWidth = WIDTH / 2;
+        int midHeight = HEIGHT / 2;
+        StdDraw.clear(Color.black);
+        StdDraw.setPenColor(Color.white);
+        Font largeFont = new Font("Monaco", Font.BOLD, 20);
+        StdDraw.setFont(largeFont);
+        StdDraw.text(midWidth, midHeight, "Good job, you left the place.");
+        StdDraw.show();
+        StdDraw.pause(1500);
+        drawMenu();
+    }
+
+    private World parseInputString(World world, String command) {
+        for (int i = 0; i < command.length(); i++) {
+            char c = command.charAt(i);
+            if (isControlCommand(c)) {
+                world.controlPlayer(c);
+            } else if (c == ':' && command.charAt(i + 1) == 'q') {
+                saveWorld(world);
+                break;
+            }
+        }
+        return world;
+    }
+
     /**
      * Method used for autograding and testing the game code. The input string will be a series
      * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww". The game should
@@ -242,28 +252,16 @@ public class Game {
             MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - HUD_OFFSET, seed);
             TETile[][] map = mg.generate();
             World initWorld = new World(map, seed);
-            World world = parseInputString(initWorld, input.substring(sIndex + 1, input.length()));
+            World world = parseInputString(initWorld, input.substring(sIndex + 1));
             return world.map;
         } else if (input.startsWith("l")) {
             World initWorld = loadWorld();
             if (!initWorld.equals(null)) {
-                World world = parseInputString(initWorld, input.substring(1, input.length()));
+                World world = parseInputString(initWorld, input.substring(1));
                 return world.map;
             }
         }
         return null;
     }
 
-    private World parseInputString(World world, String command) {
-        for (int i = 0; i < command.length(); i++) {
-            char c = command.charAt(i);
-            if (isControlCommand(c)) {
-                world.controlPlayer(c);
-            } else if (c == ':' && command.charAt(i + 1) == 'q') {
-                saveWorld(world);
-                break;
-            }
-        }
-        return world;
-    }
 }
