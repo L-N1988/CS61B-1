@@ -36,6 +36,16 @@ public class MapGenerator {
         }
     }
 
+    private class Position {
+        int x;
+        int y;
+
+        Position(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     int WIDTH;
     int HEIGHT;
     long SEED;
@@ -51,12 +61,6 @@ public class MapGenerator {
         HEIGHT = height;
         SEED = seed;
         RANDOM = new Random(seed);
-    }
-
-    public MapGenerator(int width, int height) {
-        WIDTH = width;
-        HEIGHT = height;
-        RANDOM = new Random();
     }
 
     private void addRectangle(TETile[][] world, Rectangle rectangle) {
@@ -93,8 +97,7 @@ public class MapGenerator {
         int bottomY = uniformInclusive(RANDOM, origin.bottomY + minAdjacentLength - sideLengthY,
                 origin.topY - minAdjacentLength + 1);
         int topY = bottomY + sideLengthY - 1;
-        Rectangle newRectangle = new Rectangle(leftX, rightX, bottomY, topY);
-        return newRectangle;
+        return new Rectangle(leftX, rightX, bottomY, topY);
     }
 
     private Rectangle generateBottomRectangle(Rectangle origin) {
@@ -106,8 +109,7 @@ public class MapGenerator {
         int leftX = uniformInclusive(RANDOM, origin.leftX + minAdjacentLength - sideLengthX,
                 origin.rightX - minAdjacentLength + 1);
         int rightX = leftX + sideLengthX - 1;
-        Rectangle newRectangle = new Rectangle(leftX, rightX, bottomY, topY);
-        return newRectangle;
+        return new Rectangle(leftX, rightX, bottomY, topY);
     }
 
     private Rectangle generateRightRectangle(Rectangle origin) {
@@ -118,8 +120,7 @@ public class MapGenerator {
         int bottomY = uniformInclusive(RANDOM, origin.bottomY + minAdjacentLength - sideLengthY,
                 origin.topY - minAdjacentLength + 1);
         int topY = bottomY + sideLengthY - 1;
-        Rectangle newRectangle = new Rectangle(leftX, rightX, bottomY, topY);
-        return newRectangle;
+        return new Rectangle(leftX, rightX, bottomY, topY);
     }
 
     private Rectangle generateTopRectangle(Rectangle origin) {
@@ -131,10 +132,8 @@ public class MapGenerator {
         int leftX = uniformInclusive(RANDOM, origin.leftX + minAdjacentLength - sideLengthX,
                 origin.rightX - minAdjacentLength + 1);
         int rightX = leftX + sideLengthX - 1;
-        Rectangle newRectangle = new Rectangle(leftX, rightX, bottomY, topY);
-        return newRectangle;
+        return new Rectangle(leftX, rightX, bottomY, topY);
     }
-
 
     private int getHorizontalChannelPosition(Rectangle a, Rectangle b) {
         int bottom = Math.max(a.bottomY, b.bottomY) + 1;
@@ -159,33 +158,33 @@ public class MapGenerator {
     }
 
     private void generateAdjacentRectangle(TETile[][] world, Rectangle rectangle) {
-        Rectangle a = generateLeftRectangle(rectangle);
-        if (isValid(a)) {
-            addRectangle(world, a);
-            int y = getHorizontalChannelPosition(rectangle, a);
-            addHorizontalChannel(world, a.rightX, y);
-            generateAdjacentRectangle(world, a);
+        Rectangle l = generateLeftRectangle(rectangle);
+        if (isValid(l)) {
+            addRectangle(world, l);
+            int y = getHorizontalChannelPosition(rectangle, l);
+            addHorizontalChannel(world, l.rightX, y);
+            generateAdjacentRectangle(world, l);
         }
-        Rectangle c = generateBottomRectangle(rectangle);
-        if (isValid(c)) {
-            addRectangle(world, c);
-            int x = getVerticalChannelPosition(rectangle, c);
-            addVerticalChannel(world, x, c.topY);
-            generateAdjacentRectangle(world, c);
-        }
-        Rectangle b = generateRightRectangle(rectangle);
+        Rectangle b = generateBottomRectangle(rectangle);
         if (isValid(b)) {
             addRectangle(world, b);
-            int y = getHorizontalChannelPosition(rectangle, b);
-            addHorizontalChannel(world, rectangle.rightX, y);
+            int x = getVerticalChannelPosition(rectangle, b);
+            addVerticalChannel(world, x, b.topY);
             generateAdjacentRectangle(world, b);
         }
-        Rectangle d = generateTopRectangle(rectangle);
-        if (isValid(d)) {
-            addRectangle(world, d);
-            int x = getVerticalChannelPosition(rectangle, d);
+        Rectangle r = generateRightRectangle(rectangle);
+        if (isValid(r)) {
+            addRectangle(world, r);
+            int y = getHorizontalChannelPosition(rectangle, r);
+            addHorizontalChannel(world, rectangle.rightX, y);
+            generateAdjacentRectangle(world, r);
+        }
+        Rectangle t = generateTopRectangle(rectangle);
+        if (isValid(t)) {
+            addRectangle(world, t);
+            int x = getVerticalChannelPosition(rectangle, t);
             addVerticalChannel(world, x, rectangle.topY);
-            generateAdjacentRectangle(world, d);
+            generateAdjacentRectangle(world, t);
         }
     }
 
@@ -203,6 +202,67 @@ public class MapGenerator {
             }
         }
         return true;
+    }
+
+    private void addDoor(TETile[][] world) {
+        int direction = uniform(RANDOM, 0, 4);
+
+        List<Position> positions = new ArrayList<>(30);
+        switch (direction) {
+            case 0:
+                for (int i = 0; i < WIDTH; i++) {
+                    for (int j = 0; j < HEIGHT - 1; j++) {
+                        if (world[i][j].character() == Tileset.WALL.character()) {
+                            if (world[i][j + 1].character() == Tileset.FLOOR.character()) {
+                                positions.add(new Position(i, j));
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            case 1:
+                for (int i = 0; i < WIDTH; i++) {
+                    for (int j = HEIGHT - 1; j > 0; j--) {
+                        if (world[i][j].character() == Tileset.WALL.character()) {
+                            if (world[i][j - 1].character() == Tileset.FLOOR.character()) {
+                                positions.add(new Position(i, j));
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            case 2:
+                for (int j = 0; j < HEIGHT; j++) {
+                    for (int i = 0; i < WIDTH - 1; i++) {
+                        if (world[i][j].character() == Tileset.WALL.character()) {
+                            if (world[i + 1][j].character() == Tileset.FLOOR.character()) {
+                                positions.add(new Position(i, j));
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            case 3:
+                for (int j = 0; j < HEIGHT; j++) {
+                    for (int i = WIDTH - 1; i > 0; i--) {
+                        if (world[i][j].character() == Tileset.WALL.character()) {
+                            if (world[i - 1][j].character() == Tileset.FLOOR.character()) {
+                                positions.add(new Position(i, j));
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            default:
+        }
+        int index = uniform(RANDOM, 0, positions.size());
+        world[positions.get(index).x][positions.get(index).y] =
+                TETile.colorVariant(Tileset.LOCKED_DOOR, 64, 64, 64, RANDOM);
+
     }
 
     /**
@@ -227,6 +287,7 @@ public class MapGenerator {
                 bottomY, bottomY + sideLengthY - 1);
         addRectangle(world, rectangle);
         generateAdjacentRectangle(world, rectangle);
+        addDoor(world);
         return world;
     }
 }
