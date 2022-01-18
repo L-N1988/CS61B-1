@@ -237,12 +237,12 @@ public class Game {
             MapGenerator mg = new MapGenerator(WIDTH, HEIGHT - hudOffset, seed);
             TETile[][] map = mg.generate();
             World initWorld = new World(map, seed);
-            World world = parseInputString(initWorld, input.substring(sIndex + 1, input.length() - 1));
+            World world = parseInputString(initWorld, input.substring(sIndex + 1, input.length()));
             return world.map;
         } else if (input.startsWith("l")) {
             World initWorld = loadWorld();
             if (!initWorld.equals(null)) {
-                World world = parseInputString(initWorld, input.substring(1, input.length() - 1));
+                World world = parseInputString(initWorld, input.substring(1, input.length()));
                 return world.map;
             }
         }
