@@ -7,21 +7,19 @@ import javax.print.attribute.standard.Sides;
 public class Percolation {
     private class Site {
         boolean open;
-        boolean connectedTop;
-        boolean connectedBottom;
 
         Site() {
             this.open = false;
-            this.connectedTop = false;
-            this.connectedBottom = false;
         }
     }
 
     Site[][] sites;
     private int numberOfOpenSites;
-    private boolean percolate;
     private WeightedQuickUnionUF uf;
     private int topVirtualSite;
+    private int bottomVirtualSite;
+
+    private WeightedQuickUnionUF full;
 
     public Percolation(int N) {
         if (N <= 0) {
@@ -35,13 +33,19 @@ public class Percolation {
         }
 
         numberOfOpenSites = 0;
-        percolate = false;
-        uf = new WeightedQuickUnionUF(N * N + 1);
+        uf = new WeightedQuickUnionUF(N * N + 2);
+
+        full = new WeightedQuickUnionUF(N * N + 2);
+
+
         topVirtualSite = uf.count() - 1;
+        bottomVirtualSite = uf.count() - 2;
         for (int i = 0; i < sites[0].length; i++) {
             uf.union(i, topVirtualSite);
-            sites[0][i].connectedTop = true;
-            sites[sites.length - 1][i].connectedBottom = true;
+
+            full.union(i, topVirtualSite);
+
+            uf.union(xyTo1D(sites.length - 1, i), bottomVirtualSite);
         }
     }
 
@@ -56,16 +60,11 @@ public class Percolation {
     private void addUnion(int row, int col, int dr, int dc) {
         if (!notValid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
             uf.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
-            updateStatus(sites[row + dr][col + dc], sites[row][col]);
+
+            full.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
         }
     }
 
-    private void updateStatus(Site a, Site b) {
-        boolean top = a.connectedTop || b.connectedTop;
-        boolean bottom = a.connectedBottom || b.connectedBottom;
-        a.connectedTop = b.connectedTop = top;
-        a.connectedBottom = b.connectedBottom = bottom;
-    }
 
     public void open(int row, int col) {
         if (notValid(row, col)) {
@@ -76,9 +75,6 @@ public class Percolation {
         addUnion(row, col, 0, -1);
         addUnion(row, col, 1, 0);
         addUnion(row, col, -1, 0);
-        if (sites[row][col].connectedBottom && sites[row][col].connectedTop) {
-            percolate = true;
-        }
         numberOfOpenSites += 1;
     }
 
@@ -93,7 +89,7 @@ public class Percolation {
         if (notValid(row, col)) {
             throw new IndexOutOfBoundsException("isFull " + row + "," + col);
         }
-        return isOpen(row, col) && uf.connected(xyTo1D(row, col), topVirtualSite);
+        return isOpen(row, col) && full.connected(xyTo1D(row, col), topVirtualSite);
     }
 
     public int numberOfOpenSites() {
@@ -101,8 +97,7 @@ public class Percolation {
     }
 
     public boolean percolates() {
-//        return uf.connected(bottomVirtualSite, topVirtualSite);
-        return percolate;
+        return uf.connected(bottomVirtualSite, topVirtualSite);
     }
 
     public static void main(String[] args) {
