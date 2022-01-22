@@ -3,6 +3,9 @@ package hw2;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 import javax.print.attribute.standard.Sides;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Percolation {
     private class Site {
@@ -17,10 +20,7 @@ public class Percolation {
     private int numberOfOpenSites;
     private WeightedQuickUnionUF uf;
     private int topVirtualSite;
-    private int bottomVirtualSite;
-
-    private WeightedQuickUnionUF full;
-
+    private boolean bottomIsFull;
     public Percolation(int N) {
         if (N <= 0) {
             throw new IllegalArgumentException("N < 0");
@@ -34,18 +34,9 @@ public class Percolation {
 
         numberOfOpenSites = 0;
         uf = new WeightedQuickUnionUF(N * N + 2);
-
-        full = new WeightedQuickUnionUF(N * N + 2);
-
-
         topVirtualSite = uf.count() - 1;
-        bottomVirtualSite = uf.count() - 2;
         for (int i = 0; i < sites[0].length; i++) {
             uf.union(i, topVirtualSite);
-
-            full.union(i, topVirtualSite);
-
-            uf.union(xyTo1D(sites.length - 1, i), bottomVirtualSite);
         }
     }
 
@@ -60,8 +51,6 @@ public class Percolation {
     private void addUnion(int row, int col, int dr, int dc) {
         if (!notValid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
             uf.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
-
-            full.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
         }
     }
 
@@ -76,6 +65,15 @@ public class Percolation {
         addUnion(row, col, 1, 0);
         addUnion(row, col, -1, 0);
         numberOfOpenSites += 1;
+        if (! bottomIsFull) {
+            for (int i = 0; i < sites.length; i++) {
+                if (uf.connected(xyTo1D(sites.length - 1, i), topVirtualSite)) {
+                    bottomIsFull = true;
+                    break;
+                }
+            }
+
+        }
     }
 
     public boolean isOpen(int row, int col) {
@@ -89,7 +87,7 @@ public class Percolation {
         if (notValid(row, col)) {
             throw new IndexOutOfBoundsException("isFull " + row + "," + col);
         }
-        return isOpen(row, col) && full.connected(xyTo1D(row, col), topVirtualSite);
+        return isOpen(row, col) && uf.connected(xyTo1D(row, col), topVirtualSite);
     }
 
     public int numberOfOpenSites() {
@@ -97,7 +95,8 @@ public class Percolation {
     }
 
     public boolean percolates() {
-        return uf.connected(bottomVirtualSite, topVirtualSite);
+//        return uf.connected(bottomVirtualSite, topVirtualSite);
+        return bottomIsFull;
     }
 
     public static void main(String[] args) {
