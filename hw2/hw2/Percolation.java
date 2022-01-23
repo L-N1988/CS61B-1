@@ -5,6 +5,7 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 public class Percolation {
     private class Site {
         boolean open;
+        boolean isConnectedBottom;
 
         Site() {
             this.open = false;
@@ -15,6 +16,7 @@ public class Percolation {
     private int numberOfOpenSites;
     private WeightedQuickUnionUF uf;
     private int topVirtualSite;
+    private boolean percolated;
 
     public Percolation(int N) {
         if (N <= 0) {
@@ -30,13 +32,21 @@ public class Percolation {
         numberOfOpenSites = 0;
         uf = new WeightedQuickUnionUF(N * N + 2);
         topVirtualSite = uf.count() - 1;
+        percolated = false;
         for (int i = 0; i < sites[0].length; i++) {
             uf.union(i, topVirtualSite);
+            sites[sites.length - 1][i].isConnectedBottom = true;
         }
     }
 
     private int xyTo1D(int r, int c) {
         return r * sites.length + c;
+    }
+
+    private Site indexToSite(int index) {
+        int r = index / sites.length;
+        int c = index - r * sites.length;
+        return sites[r][c];
     }
 
     private boolean notValid(int row, int col) {
@@ -46,6 +56,10 @@ public class Percolation {
     private void addUnion(int row, int col, int dr, int dc) {
         if (!notValid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
             uf.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
+            if (!percolated) {
+                int parent = uf.find(xyTo1D(row, col));
+                indexToSite(parent).isConnectedBottom = sites[row][col].isConnectedBottom || indexToSite(parent).isConnectedBottom;
+            }
         }
     }
 
@@ -60,6 +74,12 @@ public class Percolation {
             addUnion(row, col, 0, -1);
             addUnion(row, col, 1, 0);
             addUnion(row, col, -1, 0);
+            if (!percolated) {
+                int parent = uf.find(xyTo1D(row, col));
+                if (indexToSite(parent).isConnectedBottom && uf.connected(parent, topVirtualSite)) {
+                    percolated = true;
+                }
+            }
             numberOfOpenSites += 1;
         }
     }
@@ -83,7 +103,7 @@ public class Percolation {
     }
 
     public boolean percolates() {
-        return uf.connected(bottomVirtualSite, topVirtualSite);
+        return percolated;
     }
 
     public static void main(String[] args) {
