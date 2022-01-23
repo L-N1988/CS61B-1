@@ -76,13 +76,14 @@ public class Percolation {
             addUnion(row, col, 0, -1);
             addUnion(row, col, 1, 0);
             addUnion(row, col, -1, 0);
+            numberOfOpenSites += 1;
+
             if (!percolated) {
                 int parent = uf.find(xyTo1D(row, col));
                 if (indexToSite(parent).isConnectedBottom && uf.connected(parent, topVirtualSite)) {
                     percolated = true;
                 }
             }
-            numberOfOpenSites += 1;
         }
     }
 
