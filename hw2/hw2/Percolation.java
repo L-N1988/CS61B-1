@@ -2,11 +2,6 @@ package hw2;
 
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
-import javax.print.attribute.standard.Sides;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
 public class Percolation {
     private class Site {
         boolean open;
@@ -20,7 +15,7 @@ public class Percolation {
     private int numberOfOpenSites;
     private WeightedQuickUnionUF uf;
     private int topVirtualSite;
-    private boolean bottomIsFull;
+
     public Percolation(int N) {
         if (N <= 0) {
             throw new IllegalArgumentException("N < 0");
@@ -59,20 +54,13 @@ public class Percolation {
         if (notValid(row, col)) {
             throw new IndexOutOfBoundsException("Open " + row + "," + col);
         }
-        sites[row][col].open = true;
-        addUnion(row, col, 0, 1);
-        addUnion(row, col, 0, -1);
-        addUnion(row, col, 1, 0);
-        addUnion(row, col, -1, 0);
-        numberOfOpenSites += 1;
-        if (! bottomIsFull) {
-            for (int i = 0; i < sites.length; i++) {
-                if (uf.connected(xyTo1D(sites.length - 1, i), topVirtualSite)) {
-                    bottomIsFull = true;
-                    break;
-                }
-            }
-
+        if (!sites[row][col].open) {
+            sites[row][col].open = true;
+            addUnion(row, col, 0, 1);
+            addUnion(row, col, 0, -1);
+            addUnion(row, col, 1, 0);
+            addUnion(row, col, -1, 0);
+            numberOfOpenSites += 1;
         }
     }
 
@@ -95,8 +83,7 @@ public class Percolation {
     }
 
     public boolean percolates() {
-//        return uf.connected(bottomVirtualSite, topVirtualSite);
-        return bottomIsFull;
+        return uf.connected(bottomVirtualSite, topVirtualSite);
     }
 
     public static void main(String[] args) {
