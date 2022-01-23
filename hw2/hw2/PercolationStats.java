@@ -7,22 +7,20 @@ import edu.princeton.cs.introcs.Stopwatch;
 
 public class PercolationStats {
     double[] fraction;
-    int time;
 
     public PercolationStats(int N, int T, PercolationFactory pf) {
         validate(N, T);
         this.fraction = new double[T];
-        this.time = 0;
         for (int t = 0; t < T; t++) {
             Percolation percolation = pf.make(N);
             while (!percolation.percolates()) {
                 int x = StdRandom.uniform(N);
                 int y = StdRandom.uniform(N);
-                if (!percolation.isOpen(x, y))
+                if (!percolation.isOpen(x, y)) {
                     percolation.open(x, y);
+                }
             }
-            this.time = t;
-            this.fraction[t] = (double) percolation.numberOfOpenSites() / N * N;
+            this.fraction[t] = (double) percolation.numberOfOpenSites() / (N * N);
         }
     }   // perform T independent experiments on an N-by-N grid
 
@@ -33,19 +31,19 @@ public class PercolationStats {
     }
 
     public double mean() {
-        return StdStats.mean(this.fraction, 0, this.time + 1);
+        return StdStats.mean(this.fraction);
     } // sample mean of percolation threshold
 
     public double stddev() {
-        return StdStats.stddev(this.fraction, 0, this.time + 1);
+        return StdStats.stddev(this.fraction);
     } // sample standard deviation of percolation threshold
 
     public double confidenceLow() {
-        return mean() - 1.96 * stddev() / Math.sqrt(this.time);
+        return mean() - 1.96 * stddev() / Math.sqrt(this.fraction.length);
     } // low endpoint of 95% confidence interval
 
     public double confidenceHigh() {
-        return mean() + 1.96 * stddev() / Math.sqrt(this.time);
+        return mean() + 1.96 * stddev() / Math.sqrt(this.fraction.length);
     } // high endpoint of 95% confidence interval
 
     public static void main(String[] args) {
