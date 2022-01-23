@@ -56,12 +56,12 @@ public class Percolation {
         }
     }
 
-    private boolean notValid(int row, int col) {
+    private boolean invalid(int row, int col) {
         return row < 0 || row >= sites.length || col < 0 || col >= sites.length;
     }
 
     private void addUnion(int row, int col, int dr, int dc) {
-        if (!notValid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
+        if (!invalid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
             int p1 = uf.find(xyTo1D(row, col));
             int p2 = uf.find(xyTo1D(row + dr, col + dc));
             uf.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
@@ -73,7 +73,7 @@ public class Percolation {
 
 
     public void open(int row, int col) {
-        if (notValid(row, col)) {
+        if (invalid(row, col)) {
             throw new IndexOutOfBoundsException("Open " + row + "," + col);
         }
         if (!sites[row][col].open) {
@@ -94,14 +94,14 @@ public class Percolation {
     }
 
     public boolean isOpen(int row, int col) {
-        if (notValid(row, col)) {
+        if (invalid(row, col)) {
             throw new IndexOutOfBoundsException("isOpen " + row + "," + col);
         }
         return sites[row][col].open;
     }
 
     public boolean isFull(int row, int col) {
-        if (notValid(row, col)) {
+        if (invalid(row, col)) {
             throw new IndexOutOfBoundsException("isFull " + row + "," + col);
         }
         return isOpen(row, col) && uf.connected(xyTo1D(row, col), topIndex);
