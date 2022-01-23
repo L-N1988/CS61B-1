@@ -9,6 +9,7 @@ public class Percolation {
 
         Site() {
             this.open = false;
+            this.isConnectedBottom = false;
         }
     }
 
@@ -55,11 +56,12 @@ public class Percolation {
 
     private void addUnion(int row, int col, int dr, int dc) {
         if (!notValid(row + dr, col + dc) && isOpen(row + dr, col + dc)) {
+            int p1 = uf.find(xyTo1D(row, col));
+            int p2 = uf.find(xyTo1D(row + dr, col + dc));
             uf.union(xyTo1D(row, col), xyTo1D(row + dr, col + dc));
-            if (!percolated) {
-                int parent = uf.find(xyTo1D(row, col));
-                indexToSite(parent).isConnectedBottom = sites[row][col].isConnectedBottom || indexToSite(parent).isConnectedBottom;
-            }
+            int newParent = uf.find(xyTo1D(row, col));
+            indexToSite(newParent).isConnectedBottom =
+                    indexToSite(p1).isConnectedBottom || indexToSite(p2).isConnectedBottom;
         }
     }
 
@@ -107,6 +109,5 @@ public class Percolation {
     }
 
     public static void main(String[] args) {
-        Percolation p = new Percolation(5);
     }
 }
