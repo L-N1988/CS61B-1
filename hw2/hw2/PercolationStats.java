@@ -1,12 +1,10 @@
 package hw2;
 
-import edu.princeton.cs.introcs.StdOut;
 import edu.princeton.cs.introcs.StdStats;
 import edu.princeton.cs.introcs.StdRandom;
-import edu.princeton.cs.introcs.Stopwatch;
 
 public class PercolationStats {
-    double[] fraction;
+    private double[] fraction;
 
     public PercolationStats(int N, int T, PercolationFactory pf) {
         validate(N, T);
@@ -46,17 +44,17 @@ public class PercolationStats {
         return mean() + 1.96 * stddev() / Math.sqrt(this.fraction.length);
     } // high endpoint of 95% confidence interval
 
-    public static void main(String[] args) {
-        PercolationFactory pf = new PercolationFactory();
-
-        Stopwatch timer1 = new Stopwatch();
-        PercolationStats speedTest1 = new PercolationStats(200, 100, pf);
-        double time1 = timer1.elapsedTime();
-        StdOut.printf("%.2f seconds\n", time1); // WQU 0.44s QF 22.68 seconds
-
-        Stopwatch timer2 = new Stopwatch();
-        PercolationStats speedTest2 = new PercolationStats(200, 200, pf);
-        double time2 = timer2.elapsedTime();
-        StdOut.printf("%.2f seconds\n", time2); // WQU 0.78s QF 43.56 seconds
-    }
+//    public static void main(String[] args) {
+//        PercolationFactory pf = new PercolationFactory();
+//
+//        Stopwatch timer1 = new Stopwatch();
+//        PercolationStats speedTest1 = new PercolationStats(200, 100, pf);
+//        double time1 = timer1.elapsedTime();
+//        StdOut.printf("%.2f seconds\n", time1); // WQU 0.44s QF 22.68 seconds
+//
+//        Stopwatch timer2 = new Stopwatch();
+//        PercolationStats speedTest2 = new PercolationStats(200, 200, pf);
+//        double time2 = timer2.elapsedTime();
+//        StdOut.printf("%.2f seconds\n", time2); // WQU 0.78s QF 43.56 seconds
+//    }
 }

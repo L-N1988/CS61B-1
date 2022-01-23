@@ -13,7 +13,7 @@ public class Percolation {
         }
     }
 
-    Site[][] sites;
+    private Site[][] sites;
     private int numberOfOpenSites;
     private WeightedQuickUnionUF uf;
     private Site topVirtualSite;
