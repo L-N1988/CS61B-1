@@ -16,7 +16,8 @@ public class Percolation {
     Site[][] sites;
     private int numberOfOpenSites;
     private WeightedQuickUnionUF uf;
-    private int topVirtualSite;
+    private Site topVirtualSite;
+    private int topIndex;
     private boolean percolated;
 
     public Percolation(int N) {
@@ -31,11 +32,12 @@ public class Percolation {
         }
 
         numberOfOpenSites = 0;
-        uf = new WeightedQuickUnionUF(N * N + 2);
-        topVirtualSite = uf.count() - 1;
+        uf = new WeightedQuickUnionUF(N * N + 1);
+        topIndex = uf.count() - 1;
+        topVirtualSite = new Site();
         percolated = false;
         for (int i = 0; i < sites[0].length; i++) {
-            uf.union(i, topVirtualSite);
+            uf.union(i, topIndex);
             sites[sites.length - 1][i].isConnectedBottom = true;
         }
     }
@@ -45,9 +47,13 @@ public class Percolation {
     }
 
     private Site indexToSite(int index) {
-        int r = index / sites.length;
-        int c = index - r * sites.length;
-        return sites[r][c];
+        if (index != topIndex) {
+            int r = index / sites.length;
+            int c = index - r * sites.length;
+            return sites[r][c];
+        } else {
+            return topVirtualSite;
+        }
     }
 
     private boolean notValid(int row, int col) {
@@ -80,7 +86,7 @@ public class Percolation {
 
             if (!percolated) {
                 int parent = uf.find(xyTo1D(row, col));
-                if (indexToSite(parent).isConnectedBottom && uf.connected(parent, topVirtualSite)) {
+                if (indexToSite(parent).isConnectedBottom && uf.connected(parent, topIndex)) {
                     percolated = true;
                 }
             }
@@ -98,7 +104,7 @@ public class Percolation {
         if (notValid(row, col)) {
             throw new IndexOutOfBoundsException("isFull " + row + "," + col);
         }
-        return isOpen(row, col) && uf.connected(xyTo1D(row, col), topVirtualSite);
+        return isOpen(row, col) && uf.connected(xyTo1D(row, col), topIndex);
     }
 
     public int numberOfOpenSites() {
