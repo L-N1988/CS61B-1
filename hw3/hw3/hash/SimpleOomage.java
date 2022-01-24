@@ -34,7 +34,7 @@ public class SimpleOomage implements Oomage {
         if (!USE_PERFECT_HASH) {
             return red + green + blue;
         } else {
-            return red / 5 * 53 ^ 3 + green / 5 * 53 ^ 2 + blue / 5 * 53;
+            return red / 5 * 53 ^ 2 + green / 5 * 53  + blue / 5 ;
         }
     }
 
