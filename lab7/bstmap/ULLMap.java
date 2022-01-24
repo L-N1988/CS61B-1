@@ -107,7 +107,7 @@ public class ULLMap<K, V>  implements Map61B<K, V> {
 
         /** Create a new ULLMapIter by setting cur to the first node in the
          *  linked list that stores the key-value pairs. */
-        public ULLMapIter() {
+        ULLMapIter() {
             cur = list;
         }
 
