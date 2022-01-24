@@ -30,10 +30,14 @@ public class TestSimpleOomage {
         SimpleOomage ooB2 = new SimpleOomage(0, 15, 20);
         SimpleOomage ooC = new SimpleOomage(0, 0, 90);
         SimpleOomage ooC2 = new SimpleOomage(0, 5, 85);
+        SimpleOomage ooD = new SimpleOomage(0, 5, 0);
+        SimpleOomage ooD2 = new SimpleOomage(5, 0, 0);
         assertNotEquals(ooA.hashCode(), ooA2.hashCode());
         assertNotEquals(ooA.hashCode(), ooB.hashCode());
         assertNotEquals(ooA2.hashCode(), ooB.hashCode());
         assertNotEquals(ooC2.hashCode(), ooC.hashCode());
+
+        assertNotEquals(ooD2.hashCode(), ooD.hashCode());
         assertEquals(ooB.hashCode(), ooB2.hashCode());
     }
 
