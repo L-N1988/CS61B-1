@@ -199,14 +199,14 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     }
 
     // resize the hash table to have the given number of chains,
-    // rehashing all of the keys
+    // rehashing all the keys
     private void resize(int chains) {
-        Collection<Node>[] temp = createTable(2 * m);
+        Collection<Node>[] temp = createTable(chains);
         Set<K> set = keySet();
         for (K key : set) {
             put(key, get(key), temp);
         }
-        this.m = 2 * m;
+        this.m = chains;
         this.buckets = temp;
     }
 

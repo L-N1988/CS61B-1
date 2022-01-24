@@ -1,6 +1,5 @@
 package bstmap;
 
-import java.security.Key;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -129,16 +128,17 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     @Override
     public Set<K> keySet() {
         Set<K> set = new HashSet<>();
-        return addKey(root, set);
+        addToSet(root, set);
+        return set;
     }
 
-    private Set<K> addKey(BSTNode node, Set<K> set) {
-        if (node != null) {
-            set.add(node.key);
-            addKey(node.left, set);
-            addKey(node.right, set);
+    private void addToSet(BSTNode x, Set<K> set) {
+        if (x == null) {
+            return;
         }
-        return set;
+        set.add(x.key);
+        addToSet(x.left, set);
+        addToSet(x.right, set);
     }
 
     /**
@@ -156,25 +156,38 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     private BSTNode min(BSTNode x) {
-        if (x.left == null) return x;
-        else return min(x.left);
+        if (x.left == null) {
+            return x;
+        } else {
+            return min(x.left);
+        }
     }
 
     private BSTNode deleteMin(BSTNode x) {
-        if (x.left == null) return x.right;
+        if (x.left == null) {
+            return x.right;
+        }
         x.left = deleteMin(x.left);
-        x.size = size(x.left) + size(x.right) + 1;
+        x.size = size(x.left) + size(x.right) + 1;  // update size
         return x;
     }
 
     private BSTNode remove(BSTNode x, K key) {
-        if (x == null) return null;
+        if (x == null) {
+            return null;
+        }
         int cmp = key.compareTo(x.key);
-        if (cmp < 0) x.left = remove(x.left, key);
-        else if (cmp > 0) x.right = remove(x.right, key);
-        else {
-            if (x.right == null) return x.left;
-            if (x.left == null) return x.right;
+        if (cmp < 0) {
+            x.left = remove(x.left, key);
+        } else if (cmp > 0) {
+            x.right = remove(x.right, key);
+        } else {
+            if (x.right == null) {
+                return x.left;
+            }
+            if (x.left == null) {
+                return x.right;
+            }
             BSTNode t = x;
             x = min(t.right);
             x.right = deleteMin(t.right);
@@ -199,7 +212,21 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         throw new UnsupportedOperationException();
     }
 
-    public void printInOrder() {
 
+    /**
+     * Prints out your BSTMap in order of increasing Key.
+     */
+    public void printInOrder() {
+        print(root);
     }
+
+    private void print(BSTNode x) {
+        if (x == null) {
+            return;
+        }
+        print(x.left);
+        System.out.println(x.key);
+        print(x.right);
+    }
+
 }
