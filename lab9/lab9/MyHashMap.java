@@ -148,8 +148,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         return null;
     }
 
-    // hash function for keys - returns value between 0 and m-1 (assumes m is a power of 2)
-    // (from Java 7 implementation, protects against poor quality hashCode() implementations)
     private int hash(K key) {
         int h = key.hashCode();
         return Math.floorMod(h, m);
@@ -201,12 +199,12 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     // resize the hash table to have the given number of chains,
     // rehashing all of the keys
     private void resize(int chains) {
-        Collection<Node>[] temp = createTable(2 * m);
+        Collection<Node>[] temp = createTable(chains);
         Set<K> set = keySet();
         for (K key : set) {
             put(key, get(key), temp);
         }
-        this.m = 2 * m;
+        this.m = chains;
         this.buckets = temp;
     }
 
