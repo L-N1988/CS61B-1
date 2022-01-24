@@ -1,5 +1,6 @@
 package lab9;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -126,7 +127,17 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
      */
     @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        Set<K> set = new HashSet<>();
+        return addKey(root, set);
+    }
+
+    private Set<K> addKey(BSTNode node, Set<K> set) {
+        if (node != null) {
+            set.add(node.key);
+            addKey(node.left, set);
+            addKey(node.right, set);
+        }
+        return set;
     }
 
     /**
@@ -136,7 +147,40 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
      */
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        V val = get(key);
+        if (val != null) {
+            root = remove(root, key);
+        }
+        return val;
+    }
+
+    private BSTNode min(BSTNode x) {
+        if (x.left == null) return x;
+        else return min(x.left);
+    }
+
+    private BSTNode deleteMin(BSTNode x) {
+        if (x.left == null) return x.right;
+        x.left = deleteMin(x.left);
+        x.size = size(x.left) + size(x.right) + 1;
+        return x;
+    }
+
+    private BSTNode remove(BSTNode x, K key) {
+        if (x == null) return null;
+        int cmp = key.compareTo(x.key);
+        if (cmp < 0) x.left = remove(x.left, key);
+        else if (cmp > 0) x.right = remove(x.right, key);
+        else {
+            if (x.right == null) return x.left;
+            if (x.left == null) return x.right;
+            BSTNode t = x;
+            x = min(t.right);
+            x.right = deleteMin(t.right);
+            x.left = t.left;
+        }
+        x.size = size(x.left) + size(x.right) + 1;
+        return x;
     }
 
     /**
@@ -157,6 +201,6 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     public void printInOrder() {
 
     }
-
-
 }
+
+
