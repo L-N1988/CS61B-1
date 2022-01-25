@@ -209,9 +209,9 @@ public class ArrayHeap<T> implements ExtrinsicPQ<T> {
                 getNode(i).myPriority = priority;
                 swim(i);
                 sink(i);
+                break;
             }
         }
-
         return;
     }
 
