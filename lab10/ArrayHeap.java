@@ -204,24 +204,12 @@ public class ArrayHeap<T> implements ExtrinsicPQ<T> {
      */
     @Override
     public void changePriority(T item, double priority) {
-        int[] indices = new int[size];
-        int num = -1;
         for (int i = 1; i <= size; i++) {
             if (getNode(i).myItem.equals(item)) {
-                num++;
-                indices[num] = i;
                 getNode(i).myPriority = priority;
+                swim(i);
+                sink(i);
             }
-        }
-        for (int i = 0; i <= num; i++) {
-            int index = indices[num];
-            if (min(index, parentIndex(index)) == index) {
-                swim(index);
-            } else if (min(leftIndex(index), index) == leftIndex(index)
-                    || min(rightIndex(index), index) == rightIndex(index)) {
-                sink(index);
-            }
-
         }
 
         return;
@@ -463,19 +451,17 @@ public class ArrayHeap<T> implements ExtrinsicPQ<T> {
     public void testChangePriority() {
         ExtrinsicPQ<String> pq = new ArrayHeap<>();
         pq.insert("c", 3);
-        pq.insert("i", 2);
+        pq.insert("i", 1);
         pq.insert("g", 7);
-        pq.insert("d", 6);
-        pq.insert("a", 8);
+        pq.insert("d", 4);
+        pq.insert("a", 9);
         pq.insert("h", 8);
         pq.insert("e", 5);
         pq.insert("b", 2);
         pq.insert("c", 3);
-        pq.insert("d", 6);
-
+        pq.insert("d", 4);
         pq.changePriority("a", 1);
         pq.changePriority("i", 9);
-        pq.changePriority("d", 4);
         int i = 0;
         String[] expected = {"a", "b", "c", "c", "d", "d", "e", "g", "h", "i"};
         while (pq.size() > 1) {
