@@ -211,11 +211,10 @@ public class ArrayHeap<T> implements ExtrinsicPQ<T> {
                 getNode(i).myPriority = priority;
             }
         }
-
         if (min(index, parentIndex(index)) == index) {
             swim(index);
-        } else if (min(index, leftIndex(index)) == leftIndex(index)
-                || min(index, rightIndex(index)) == rightIndex(index)) {
+        } else if (min(leftIndex(index), index) == leftIndex(index)
+                || min(rightIndex(index), index) == rightIndex(index)) {
             sink(index);
         }
 
@@ -446,6 +445,31 @@ public class ArrayHeap<T> implements ExtrinsicPQ<T> {
         pq.insert("c", 3);
         pq.insert("d", 4);
 
+        int i = 0;
+        String[] expected = {"a", "b", "c", "c", "d", "d", "e", "g", "h", "i"};
+        while (pq.size() > 1) {
+            assertEquals(expected[i], pq.removeMin());
+            i += 1;
+        }
+    }
+
+    @Test
+    public void testChangePriority() {
+        ExtrinsicPQ<String> pq = new ArrayHeap<>();
+        pq.insert("c", 3);
+        pq.insert("i", 2);
+        pq.insert("g", 7);
+        pq.insert("d", 4);
+        pq.insert("a", 8);
+        pq.insert("h", 2);
+        pq.insert("e", 5);
+        pq.insert("b", 2);
+        pq.insert("c", 3);
+        pq.insert("d", 4);
+
+        pq.changePriority("a", 1);
+        pq.changePriority("i", 9);
+        pq.changePriority("h", 8);
         int i = 0;
         String[] expected = {"a", "b", "c", "c", "d", "d", "e", "g", "h", "i"};
         while (pq.size() > 1) {
