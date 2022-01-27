@@ -1,7 +1,9 @@
 package lab11.graphs;
 
+import java.util.HashMap;
+
 /**
- *  @author Josh Hug
+ * @author Josh Hug
  */
 public class MazeCycles extends MazeExplorer {
     /* Inherits public fields:
@@ -9,16 +11,50 @@ public class MazeCycles extends MazeExplorer {
     public int[] edgeTo;
     public boolean[] marked;
     */
+    private int duplicate = -1;
+    private boolean cycleFound = false;
+    private Maze maze;
+    private HashMap<Integer, Integer> map = new HashMap<>();
 
     public MazeCycles(Maze m) {
         super(m);
+        maze = m;
     }
 
     @Override
     public void solve() {
-        // TODO: Your code here!
+        distTo[0] = 0;
+        dfs(0);
     }
 
-    // Helper methods go here
+    private void dfs(int v) {
+
+        marked[v] = true;
+        announce();
+
+        for (int w : maze.adj(v)) {
+            if (map.containsKey(w) && map.get(w) == v) {
+                continue;
+            }
+            map.put(v, w);
+            if (!marked[w]) {
+                distTo[w] = distTo[v] + 1;  // update distance
+                dfs(w);
+            } else {
+                cycleFound = true;
+                duplicate = w;
+            }
+
+            if (cycleFound) {
+                if (distTo[v] >= distTo[duplicate]) {
+                    edgeTo[w] = v;
+                }
+                announce();
+                return;
+            }
+
+        }
+
+    }
 }
 
