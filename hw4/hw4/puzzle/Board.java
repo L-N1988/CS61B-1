@@ -151,6 +151,7 @@ public class Board implements WorldState {
      * Returns true if this board's tile values are the same
      * position as y's
      */
+    @Override
     public boolean equals(Object y) {
         if (this == y) {
             return true;
@@ -173,9 +174,22 @@ public class Board implements WorldState {
         return true;
     }
 
+    @Override
+    public int hashCode() {
+        int size = size();
+        int result = 0;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                result = result * 11 + tileAt(i, j);
+            }
+        }
+        return result;
+    }
+
     /**
      * Returns the string representation of the board.
      */
+    @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
         int N = size();

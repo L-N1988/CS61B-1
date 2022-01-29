@@ -33,10 +33,10 @@ public class MazeCycles extends MazeExplorer {
         announce();
 
         for (int w : maze.adj(v)) {
-            if (map.containsKey(w) && map.get(w) == v) {
+            if (map.containsKey(v) && map.get(v) == w) {
                 continue;
             }
-            map.put(v, w);
+            map.put(w, v);
             if (!marked[w]) {
                 distTo[w] = distTo[v] + 1;  // update distance
                 dfs(w);
