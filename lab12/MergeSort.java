@@ -86,6 +86,9 @@ public class MergeSort {
             }
             queues = mergedQueues;
         }
+        if (queues.size() == 0) {
+            return items;
+        }
         return queues.dequeue();
     }
 
