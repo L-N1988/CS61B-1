@@ -34,8 +34,8 @@ public class MergeSort {
     /**
      * Returns a queue of queues that each contain one item from items.
      */
-    private static <Item extends Comparable> Queue<Queue<Item>>
-    makeSingleItemQueues(Queue<Item> items) {
+    private static <Item extends Comparable> Queue<Queue<Item>> makeSingleItemQueues(
+            Queue<Item> items) {
         Queue<Queue<Item>> queues = new Queue<>();
         for (Item e : items) {
             Queue<Item> singleItemQueue = new Queue<>();
@@ -71,6 +71,9 @@ public class MergeSort {
      */
     public static <Item extends Comparable> Queue<Item> mergeSort(
             Queue<Item> items) {
+        if (items.size() == 0) {
+            return items;
+        }
         Queue<Queue<Item>> queues = makeSingleItemQueues(items);
         Queue<Queue<Item>> mergedQueues;
         while (queues.size() > 1) {
@@ -85,9 +88,6 @@ public class MergeSort {
                 mergedQueues.enqueue(q1);
             }
             queues = mergedQueues;
-        }
-        if (queues.size() == 0) {
-            return items;
         }
         return queues.dequeue();
     }
