@@ -58,12 +58,20 @@ public class QuickSort {
     }
 
     public static void main(String[] args) {
-        Queue<String> students = new Queue<>();
-        students.enqueue("Alice");
-        students.enqueue("Vanessa");
-        students.enqueue("Ethan");
+        Queue<Integer> students = new Queue<>();
+        students.enqueue(6);
+        students.enqueue(4);
+        students.enqueue(0);
+        students.enqueue(0);
+        students.enqueue(8);
+        students.enqueue(1);
+        students.enqueue(4);
+        students.enqueue(6);
+        students.enqueue(0);
+        students.enqueue(0);
         System.out.println(students);
-        quickSort(students);
+        students = quickSort(students);
         System.out.println(students);
+        //6 4 0 0 8 1 4 6 0 0
     }
 }

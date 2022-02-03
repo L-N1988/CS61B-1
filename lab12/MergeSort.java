@@ -73,7 +73,7 @@ public class MergeSort {
             Queue<Item> items) {
         Queue<Queue<Item>> queues = makeSingleItemQueues(items);
         Queue<Queue<Item>> mergedQueues;
-        while (queues.size() != 1) {
+        while (queues.size() > 1) {
             mergedQueues = new Queue<>();
             while (!queues.isEmpty()) {
                 Queue<Item> q1 = queues.dequeue();
@@ -90,12 +90,20 @@ public class MergeSort {
     }
 
     public static void main(String[] args) {
-        Queue<String> students = new Queue<>();
-        students.enqueue("Alice");
-        students.enqueue("Vanessa");
-        students.enqueue("Ethan");
+        Queue<Integer> students = new Queue<>();
+        students.enqueue(6);
+        students.enqueue(4);
+        students.enqueue(0);
+        students.enqueue(0);
+        students.enqueue(8);
+        students.enqueue(1);
+        students.enqueue(4);
+        students.enqueue(6);
+        students.enqueue(0);
+        students.enqueue(0);
         System.out.println(students);
         students = mergeSort(students);
         System.out.println(students);
+        //6 4 0 0 8 1 4 6 0 0
     }
 }
