@@ -37,7 +37,8 @@ public class RadixSort {
         if (index < 0) {
             return;
         }
-        // Optional LSD helper method for required LSD radix sort
+
+        // gather all the counts for each value
         int[] counts = new int[257];
         for (String ascii : asciis) {
             if (index >= ascii.length()) {
@@ -69,6 +70,7 @@ public class RadixSort {
             starts[item] += 1;
         }
         System.arraycopy(sorted, 0, asciis, 0, asciis.length);
+
         sortHelperLSD(asciis, index - 1);
     }
 
