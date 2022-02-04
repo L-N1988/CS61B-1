@@ -2,7 +2,6 @@
  * Class for doing Radix sort
  *
  * @author Akhil Batra, Alexander Hwang
- *
  */
 public class RadixSort {
     /**
@@ -12,23 +11,65 @@ public class RadixSort {
      * The Strings can be variable length (all Strings are not constrained to 1 length)
      *
      * @param asciis String[] that needs to be sorted
-     *
      * @return String[] the sorted array
      */
     public static String[] sort(String[] asciis) {
-        // TODO: Implement LSD Sort
-        return null;
+        String[] sorted = new String[asciis.length];
+        int maxLength = 0;
+        for (int i = 0; i < asciis.length; i++) {
+            if (asciis[i].length() > maxLength) {
+                maxLength = asciis[i].length();
+            }
+            sorted[i] = asciis[i];
+        }
+        sortHelperLSD(sorted, maxLength);
+        return sorted;
     }
 
     /**
      * LSD helper method that performs a destructive counting sort the array of
      * Strings based off characters at a specific index.
+     *
      * @param asciis Input array of Strings
-     * @param index The position to sort the Strings on.
+     * @param index  The position to sort the Strings on.
      */
     private static void sortHelperLSD(String[] asciis, int index) {
+        if (index < 0) {
+            return;
+        }
         // Optional LSD helper method for required LSD radix sort
-        return;
+        int[] counts = new int[257];
+        for (String ascii : asciis) {
+            if (index >= ascii.length()) {
+                counts[0]++;
+            } else {
+                int i = (int) ascii.charAt(index) + 1;
+                counts[i]++;
+            }
+        }
+
+        // counting sort that uses start position calculation
+        int[] starts = new int[257];
+        int pos = 0;
+        for (int i = 0; i < starts.length; i += 1) {
+            starts[i] = pos;
+            pos += counts[i];
+        }
+
+        String[] sorted = new String[asciis.length];
+        for (int i = 0; i < asciis.length; i += 1) {
+            int item;
+            if (index >= asciis[i].length()) {
+                item = 0;
+            } else {
+                item = (int) asciis[i].charAt(index) + 1;
+            }
+            int place = starts[item];
+            sorted[place] = asciis[i];
+            starts[item] += 1;
+        }
+        System.arraycopy(sorted, 0, asciis, 0, asciis.length);
+        sortHelperLSD(asciis, index - 1);
     }
 
     /**
@@ -36,10 +77,9 @@ public class RadixSort {
      * Destructive method that changes the passed in array, asciis.
      *
      * @param asciis String[] to be sorted
-     * @param start int for where to start sorting in this method (includes String at start)
-     * @param end int for where to end sorting in this method (does not include String at end)
-     * @param index the index of the character the method is currently sorting on
-     *
+     * @param start  int for where to start sorting in this method (includes String at start)
+     * @param end    int for where to end sorting in this method (does not include String at end)
+     * @param index  the index of the character the method is currently sorting on
      **/
     private static void sortHelperMSD(String[] asciis, int start, int end, int index) {
         // Optional MSD helper method for optional MSD radix sort
