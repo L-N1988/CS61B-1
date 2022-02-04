@@ -54,7 +54,7 @@ public class CountingSortTester {
     }
 
 
-    public static void main(String[] args) {
-        jh61b.junit.TestRunner.runTests(CountingSortTester.class);
-    }
+//    public static void main(String[] args) {
+//        jh61b.junit.TestRunner.runTests(CountingSortTester.class);
+//    }
 }
