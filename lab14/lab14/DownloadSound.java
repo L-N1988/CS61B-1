@@ -97,7 +97,7 @@ public class DownloadSound {
         return output;
     }
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         if (args.length < 1 || args.length > 1) {
             System.out.println("ERROR: Please provide a sound URL");
             System.exit(1);
