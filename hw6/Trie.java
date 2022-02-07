@@ -45,4 +45,32 @@ public class Trie {
             keysWithPrefix(node.links.get(c), curr + c, list);
         }
     }
+
+    public boolean hasPrefix(String s) {
+        Node curr = root;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!curr.links.containsKey(c)) {
+                return false;
+            }
+            curr = curr.links.get(c);
+        }
+        return true;
+    }
+
+    public boolean contain(String s) {
+        Node curr = root;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!curr.links.containsKey(c)) {
+                return false;
+            }
+            curr = curr.links.get(c);
+        }
+        if (curr.isKey) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

@@ -1,12 +1,21 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Boggle {
 
     // File path of dictionary file
     static String dictPath = "words.txt";
     static Trie trie = new Trie();
+
+    private static class StringComparator implements Comparator<String> {
+        public int compare(String s1, String s2) {
+            int cmp = s1.length() - s2.length();
+            if (cmp != 0) {
+                return cmp;
+            } else {
+                return s2.compareTo(s1);
+            }
+        }
+    }
 
     /**
      * Solves a Boggle puzzle.
@@ -24,13 +33,64 @@ public class Boggle {
         }
         createTrie();
         char[][] board = createBoard(boardFilePath);
-        List<String> list = new ArrayList<>();
-
-
-        return null;
+        StringComparator sc = new StringComparator();
+        PriorityQueue<String> priorityQueue = new PriorityQueue<>(sc);
+        int width = board[0].length;
+        int height = board.length;
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                TreeSet<Integer> visited = new TreeSet<>();
+                explore(i, j, priorityQueue, board, k, "", visited);
+            }
+        }
+        List<String> list = new LinkedList<>();
+        int size = Math.min(k, priorityQueue.size());
+        for (int i = 0; i < size; i++) {
+            list.add(0, priorityQueue.remove());
+        }
+        return list;
     }
 
-    public static void createTrie() {
+    private static boolean validCoordinate(int i, int j, int width, int height) {
+        if (i < 0 || i > width - 1 || j < 0 || j > height - 1) {
+            return false;
+        }
+        return true;
+    }
+
+    private static void explore(int i, int j, PriorityQueue<String> pq,
+                                char[][] board, int maxLength, String curr, Set<Integer> visited) {
+        if (!visited.contains(i * board[0].length + j) && trie.hasPrefix(curr)) {
+            curr += board[i][j];
+            visited.add(i * board[0].length + j);
+
+            if (trie.contain(curr) && curr.length() >= 3) {
+                if (!pq.contains(curr)) {
+                    if (pq.size() < maxLength) {
+                        pq.add(curr);
+                    } else {
+                        pq.add(curr);
+                        pq.remove();
+                    }
+                }
+            }
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx == 0 && dy == 0) {
+                        continue;
+                    }
+                    if (validCoordinate(i + dx, j + dy, board[0].length, board.length)) {
+                        Set<Integer> copy = new TreeSet<>(visited);
+                        explore(i + dx, j + dy, pq, board, maxLength, curr, copy);
+                    }
+                }
+            }
+        } else {
+            return;
+        }
+    }
+
+    private static void createTrie() {
         In in = new In(dictPath);
         while (!in.isEmpty()) {
             String word = in.readString();
@@ -38,13 +98,13 @@ public class Boggle {
         }
     }
 
-    public static char[][] createBoard(String boardFilePath) {
+    private static char[][] createBoard(String boardFilePath) {
         In in = new In(boardFilePath);
         String[] strings = in.readAllStrings();
-        int heigth = strings.length;
+        int height = strings.length;
         int width = strings[0].length();
-        char[][] board = new char[heigth][width];
-        for (int i = 0; i < heigth; i++) {
+        char[][] board = new char[height][width];
+        for (int i = 0; i < height; i++) {
             if (strings[i].length() != width) {
                 throw new IllegalArgumentException();
             }
@@ -55,9 +115,10 @@ public class Boggle {
         return board;
     }
 
-    public static void main(String[] args) {
-        int i = 0;
-        solve(3, "exampleBoard.txt");
-        int j = 0;
-    }
+//    public static void main(String[] args) {
+//        List<String> list = solve(7, "exampleBoard.txt");
+//        for (String s : list) {
+//            System.out.println(s);
+//        }
+//    }
 }
