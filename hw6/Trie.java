@@ -67,10 +67,6 @@ public class Trie {
             }
             curr = curr.links.get(c);
         }
-        if (curr.isKey) {
-            return true;
-        } else {
-            return false;
-        }
+        return curr.isKey;
     }
 }

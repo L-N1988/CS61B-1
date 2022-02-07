@@ -1,9 +1,14 @@
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.TreeSet;
+import java.util.Set;
+import java.util.LinkedList;
 
 public class Boggle {
 
     // File path of dictionary file
-    static String dictPath = "words.txt";
+    static String dictPath = "trivial_words.txt";
     static Trie trie = new Trie();
 
     private static class StringComparator implements Comparator<String> {
@@ -37,8 +42,8 @@ public class Boggle {
         PriorityQueue<String> priorityQueue = new PriorityQueue<>(sc);
         int width = board[0].length;
         int height = board.length;
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 TreeSet<Integer> visited = new TreeSet<>();
                 explore(i, j, priorityQueue, board, k, "", visited);
             }
@@ -52,7 +57,7 @@ public class Boggle {
     }
 
     private static boolean validCoordinate(int i, int j, int width, int height) {
-        if (i < 0 || i > width - 1 || j < 0 || j > height - 1) {
+        if (j < 0 || j > width - 1 || i < 0 || i > height - 1) {
             return false;
         }
         return true;
@@ -115,10 +120,10 @@ public class Boggle {
         return board;
     }
 
-//    public static void main(String[] args) {
-//        List<String> list = solve(7, "exampleBoard.txt");
-//        for (String s : list) {
-//            System.out.println(s);
-//        }
-//    }
+    public static void main(String[] args) {
+        List<String> list = solve(20, "exampleBoard2.txt");
+        for (String s : list) {
+            System.out.println(s);
+        }
+    }
 }
