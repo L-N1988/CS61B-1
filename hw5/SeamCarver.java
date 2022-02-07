@@ -95,7 +95,6 @@ public class SeamCarver {
                 indices[i] = indexOfMin(cost[i], 0, width() - 1);
             } else {
                 indices[i] = indexOfMin(cost[i], indices[i + 1] - 1, indices[i + 1] + 1);
-
             }
         }
         return indices;
@@ -108,11 +107,8 @@ public class SeamCarver {
                 temp.set(i, j, picture.get(j, i));
             }
         }
-        Picture origin = picture;
-        picture = temp;
-        int[] seam = findVerticalSeam();
-        picture = origin;
-        return seam;
+        SeamCarver sc = new SeamCarver(temp);
+        return sc.findVerticalSeam();
     } // sequence of indices for horizontal seam
 
     private boolean isValidSeam(int[] seam) {
