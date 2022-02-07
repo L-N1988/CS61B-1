@@ -10,7 +10,7 @@ public class SeamCarver {
     }
 
     public Picture picture() {
-        return picture;
+        return new Picture(picture);
     } // current picture
 
     public int width() {
@@ -47,8 +47,14 @@ public class SeamCarver {
     } // energy of pixel at column x and row y
 
     private int indexOfMin(double[] cost, int start, int end) {
-        if (start < 0 || start > end || end >= cost.length) {
+        if (start > end) {
             throw new IndexOutOfBoundsException();
+        }
+        if (end >= cost.length) {
+            end = cost.length - 1;
+        }
+        if (start < 0) {
+            start = 0;
         }
         int idx = start;
         for (int i = start; i <= end; i++) {
