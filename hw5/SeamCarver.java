@@ -99,7 +99,7 @@ public class SeamCarver {
         Picture temp = new Picture(height(), width());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
-                temp.setRGB(i, j, picture.getRGB(j, i));
+                temp.set(i, j, picture.get(j, i));
             }
         }
         Picture origin = picture;
