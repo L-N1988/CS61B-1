@@ -54,7 +54,7 @@ public class SanityCheckTest {
         assertArrayEquals(expected, seam);
     }
 
-    public static void main(String[] args) {
-        jh61b.junit.TestRunner.runTests(SanityCheckTest.class);
-    }
+//    public static void main(String[] args) {
+//        jh61b.junit.TestRunner.runTests(SanityCheckTest.class);
+//    }
 }
