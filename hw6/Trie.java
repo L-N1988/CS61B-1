@@ -69,4 +69,20 @@ public class Trie {
         }
         return curr.isKey;
     }
+
+    public int containOrPrefix(String s) {
+        Node curr = root;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!curr.links.containsKey(c)) {
+                return -1;
+            }
+            curr = curr.links.get(c);
+        }
+        if (curr.isKey) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }

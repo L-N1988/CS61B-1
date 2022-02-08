@@ -1,14 +1,16 @@
+import org.junit.Test;
+
 import java.util.Comparator;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.TreeSet;
+import java.util.List;
 import java.util.Set;
-import java.util.LinkedList;
 
 public class Boggle {
 
     // File path of dictionary file
-    static String dictPath = "trivial_words.txt";
+    static String dictPath = "words.txt";
     static Trie trie = new Trie();
 
     private static class StringComparator implements Comparator<String> {
@@ -38,8 +40,10 @@ public class Boggle {
         }
         createTrie();
         char[][] board = createBoard(boardFilePath);
+
         StringComparator sc = new StringComparator();
         PriorityQueue<String> priorityQueue = new PriorityQueue<>(sc);
+
         int width = board[0].length;
         int height = board.length;
         for (int i = 0; i < height; i++) {
@@ -48,6 +52,7 @@ public class Boggle {
                 explore(i, j, priorityQueue, board, k, "", visited);
             }
         }
+
         List<String> list = new LinkedList<>();
         int size = Math.min(k, priorityQueue.size());
         for (int i = 0; i < size; i++) {
@@ -65,11 +70,15 @@ public class Boggle {
 
     private static void explore(int i, int j, PriorityQueue<String> pq,
                                 char[][] board, int maxLength, String curr, Set<Integer> visited) {
-        if (!visited.contains(i * board[0].length + j) && trie.hasPrefix(curr)) {
+
+        if (!visited.contains(i * board[0].length + j)) {
             curr += board[i][j];
             visited.add(i * board[0].length + j);
+            int cmp = trie.containOrPrefix(curr);
+            if (cmp < 0)
+                return;
 
-            if (trie.contain(curr) && curr.length() >= 3) {
+            if (cmp > 0 && curr.length() >= 3) {
                 if (!pq.contains(curr)) {
                     if (pq.size() < maxLength) {
                         pq.add(curr);
@@ -79,6 +88,7 @@ public class Boggle {
                     }
                 }
             }
+
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     if (dx == 0 && dy == 0) {
@@ -90,9 +100,10 @@ public class Boggle {
                     }
                 }
             }
-        } else {
-            return;
+
         }
+        return;
+
     }
 
     private static void createTrie() {
@@ -120,10 +131,12 @@ public class Boggle {
         return board;
     }
 
-    public static void main(String[] args) {
-        List<String> list = solve(20, "exampleBoard2.txt");
-        for (String s : list) {
-            System.out.println(s);
-        }
+    @Test(timeout = 500)
+    public void testTimeCost() {
+        Stopwatch timer = new Stopwatch();
+        List<String> list = solve(25, "smallBoard.txt");// 100 * 100
+        double time2 = timer.elapsedTime();
+        StdOut.printf("%.2f seconds\n", time2);
+
     }
 }
