@@ -138,13 +138,13 @@ public class Model extends Observable {
      */
     public boolean tilt(Side side) {
         boolean changed = false;
-        board.setViewingPerspective(side);
+        board.startViewingFrom(side);
         for (int i = 0; i < board.size(); i++) {
-            if (changeSingleLine(board, i)) {
+            if (changeSingleCol(i)) {
                 changed = true;
             }
         }
-        board.setViewingPerspective(Side.NORTH);
+        board.startViewingFrom(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -152,42 +152,34 @@ public class Model extends Observable {
         return changed;
     }
 
-    private boolean changeSingleLine(Board b, int k) {  // k is the kth column
+    private int availablePos(int source, int end, int col) {
+        for (int i = end; i > source; i--) {
+            if (board.tile(col, i) == null || board.tile(col, i).value() == board.tile(col, source).value())
+                return i;
+        }
+        return source;
+    }
+
+    private boolean changeSingleCol(int col) {
         boolean changed = false;
-        for (int j = b.size() - 1; j > 0; j -= 1) {
-            // If the 1st row is null, move the next row which has a value to the 1st row
-            if (b.tile(k, j) == null) {
-                for (int x = j - 1; x >= 0; x -= 1) {
-                    if (b.tile(k, x) != null) {
-                        b.move(k, j, b.tile(k, x));
-                        changed = true;
-                        break;
-                    }
-                }
+        int size = board.size();
+        int end = size - 1;
+        for (int source = size - 2; source >= 0; source--) {
+            Tile t = board.tile(col, source);
+            if (t == null) {
+                continue;
             }
-            // The 1st row is not null
-            for (int x = j - 1; x >= 0; x -= 1) {
-                if (b.tile(k, x) == null) {
-                    continue;
-                } else if (b.tile(k, x).value() != b.tile(k, j).value()
-                        && b.tile(k, j - 1) != null) {
-                    break;
-                } else if (b.tile(k, x).value() == b.tile(k, j).value()) {
-                    b.move(k, j, b.tile(k, x));
-                    changed = true;
-                    score += b.tile(k, j).value();
-                    break;
-                } else if (b.tile(k, x).value() != b.tile(k, j).value()
-                        && b.tile(k, j - 1) == null) {
-                    b.move(k, j - 1, b.tile(k, x));
-                    changed = true;
-                    break;
+            int dest = availablePos(source, end, col);
+            if (dest != source) {
+                if (board.move(col, dest, t)) {
+                    score += board.tile(col, dest).value();
+                    end = dest - 1;
                 }
+                changed = true;
             }
         }
         return changed;
     }
-
 
     /**
      * Checks if the game is over and sets the gameOver variable
