@@ -137,19 +137,57 @@ public class Model extends Observable {
      * and the trailing tile does not.
      */
     public boolean tilt(Side side) {
-        boolean changed;
-        changed = false;
-        int size = board.size();
-        // Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
-
+        boolean changed = false;
+        board.setViewingPerspective(side);
+        for (int i = 0; i < board.size(); i++) {
+            if (changeSingleLine(board, i)) {
+                changed = true;
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
     }
+
+    private boolean changeSingleLine(Board b, int k) {  // k is the kth column
+        boolean changed = false;
+        for (int j = b.size() - 1; j > 0; j -= 1) {
+            // If the 1st row is null, move the next row which has a value to the 1st row
+            if (b.tile(k, j) == null) {
+                for (int x = j - 1; x >= 0; x -= 1) {
+                    if (b.tile(k, x) != null) {
+                        b.move(k, j, b.tile(k, x));
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            // The 1st row is not null
+            for (int x = j - 1; x >= 0; x -= 1) {
+                if (b.tile(k, x) == null) {
+                    continue;
+                } else if (b.tile(k, x).value() != b.tile(k, j).value()
+                        && b.tile(k, j - 1) != null) {
+                    break;
+                } else if (b.tile(k, x).value() == b.tile(k, j).value()) {
+                    b.move(k, j, b.tile(k, x));
+                    changed = true;
+                    score += b.tile(k, j).value();
+                    break;
+                } else if (b.tile(k, x).value() != b.tile(k, j).value()
+                        && b.tile(k, j - 1) == null) {
+                    b.move(k, j - 1, b.tile(k, x));
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        return changed;
+    }
+
 
     /**
      * Checks if the game is over and sets the gameOver variable
