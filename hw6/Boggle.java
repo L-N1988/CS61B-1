@@ -62,10 +62,7 @@ public class Boggle {
     }
 
     private static boolean validCoordinate(int i, int j, int width, int height) {
-        if (j < 0 || j > width - 1 || i < 0 || i > height - 1) {
-            return false;
-        }
-        return true;
+        return !(j < 0 || j > width - 1 || i < 0 || i > height - 1);
     }
 
     private static void explore(int i, int j, PriorityQueue<String> pq,
@@ -73,10 +70,12 @@ public class Boggle {
 
         if (!visited.contains(i * board[0].length + j)) {
             curr += board[i][j];
-            visited.add(i * board[0].length + j);
             int cmp = trie.containOrPrefix(curr);
-            if (cmp < 0)
+            if (cmp < 0) {
                 return;
+            }
+
+            visited.add(i * board[0].length + j);
 
             if (cmp > 0 && curr.length() >= 3) {
                 if (!pq.contains(curr)) {
@@ -102,6 +101,7 @@ public class Boggle {
             }
 
         }
+
         return;
 
     }
@@ -134,7 +134,7 @@ public class Boggle {
     @Test(timeout = 500)
     public void testTimeCost() {
         Stopwatch timer = new Stopwatch();
-        List<String> list = solve(25, "smallBoard.txt");// 100 * 100
+        List<String> list = solve(25, "smallBoard.txt"); // 100 * 100
         double time2 = timer.elapsedTime();
         StdOut.printf("%.2f seconds\n", time2);
 
