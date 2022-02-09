@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class Branch implements Serializable {
 
     private static final long serialVersionUID = 2229685098267757691L;
+
     private Commit pointTo;
     private String name;
 

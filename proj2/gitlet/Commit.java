@@ -48,7 +48,23 @@ public class Commit implements Serializable {
         return null;
     }
 
-    public Map<String, String> getFiles(String fileName) {
+    public Map<String, String> getFiles() {
         return files;
+    }
+
+    public Commit getParent() {
+        return this.parent;
+    }
+
+    public Date getDate() {
+        return this.timestamp;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    public Commit getSecondParent() {
+        return this.secondParent;
     }
 }

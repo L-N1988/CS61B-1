@@ -1,10 +1,8 @@
 package gitlet;
 
 import java.io.File;
-import java.io.Serializable;
-import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -13,12 +11,10 @@ import static gitlet.Utils.*;
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- * @author TODO
+ * @author Christina0031
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
@@ -59,16 +55,19 @@ public class Repository {
         return init;
     }
 
-    private static StagingArea initStagingArea() {
+    private static void initStagingArea() {
         StagingArea stagingArea = new StagingArea();
-        return cleanStagingArea(stagingArea);
+        cleanStagingArea(stagingArea);
     }
 
-    private static StagingArea cleanStagingArea(StagingArea stagingArea) {
+    private static void cleanStagingArea(StagingArea stagingArea) {
         stagingArea.clean();
+        saveStagingArea(stagingArea);
+    }
+
+    private static void saveStagingArea(StagingArea stagingArea) {
         File f = new File(GITLET_DIR + slash + "info" + slash + "stagingArea");
         Utils.writeObject(f, stagingArea);
-        return stagingArea;
     }
 
     public static void init() {
@@ -90,23 +89,51 @@ public class Repository {
         return stagingArea;
     }
 
-    private static Commit getLastCommit() {
+    private static Branch getHeadBranch() {
         File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
-        Commit commit = Utils.readObject(f, Branch.class).getPosition();
-        return commit;
+        return Utils.readObject(f, Branch.class);
     }
 
     public static void add(String fileName) {
-        File file = join(CWD, fileName);
+        File file = new File(CWD, fileName);
         if (!file.exists()) {
             Utils.message("File does not exist.");
             System.exit(0);
         } else {
             StagingArea stagingArea = getStagingArea();
-            Commit lastCommit = getLastCommit();
-            stagingArea.add(fileName, lastCommit);
+            Commit lastCommit = getHeadBranch().getPosition();
+            addToStagingArea(fileName, stagingArea, lastCommit);
         }
     }
+
+    public static void addToStagingArea(String fileName, StagingArea stagingArea, Commit lastCommit) {
+        File file = new File(CWD, fileName);
+        byte[] serialized = Utils.serialize(file);
+        Map<String, String> map = stagingArea.getFiles();
+
+        String sha1 = sha1(serialized);
+        if (sha1 == lastCommit.getSHA1(fileName)) {
+            if (map.containsKey(fileName)) {
+                map.remove(fileName);
+                deleteFile(sha1);
+            }
+            return;
+        }
+        map.put(fileName, sha1);
+        writeFile(serialized, sha1);
+        saveStagingArea(stagingArea);
+    }
+
+    private static void deleteFile(String name) {
+        File file = new File(GITLET_DIR + slash + "blobs" + slash + name);
+        restrictedDelete(file);
+    }
+
+    private static void writeFile(byte[] serialized, String sha1) {
+        File file = new File(GITLET_DIR + slash + "blobs" + slash + sha1);
+        Utils.writeContents(file, serialized);
+    }
+
 
     public static void commit(String message) {
         StagingArea stagingArea = getStagingArea();
@@ -114,20 +141,65 @@ public class Repository {
             Utils.message("No changes added to the commit.");
             System.exit(0);
         }
-        Commit lastCommit = getLastCommit();
+        Branch head = getHeadBranch();
+        Commit lastCommit = head.getPosition();
 
-        Map<String, String> files = stagingArea.files(); // TODO: write into blobs
-        Map<String, String> origin = stagingArea.files(); // change plus files to added in new commit
+        Map<String, String> files = stagingArea.getFiles();
+        Map<String, String> originFiles = lastCommit.getFiles();
+        Set<String> stagedFiles = files.keySet();
+        for (String name : stagedFiles) {
+            originFiles.put(name, files.get(name));
+        }
 
-        makeCommit(message, files, lastCommit);
+        Commit newCommit = makeCommit(message, originFiles, lastCommit);
+        cleanStagingArea(stagingArea);
+        changeBranch(head, newCommit);
     }
 
-    public static void makeCommit(String msg, Map<String, String> allFiles, Commit parent) {
+    private static Branch changeBranch(Branch branch, Commit commit) {
+        branch.changeTo(commit);
+        File f = new File(GITLET_DIR + slash + "branches" + slash + branch.getName());
+        Utils.writeObject(f, branch);
+        return branch;
+    }
+
+    public static Commit makeCommit(String msg, Map<String, String> allFiles, Commit parent) {
         Commit commit = new Commit(msg, new Date(), allFiles, parent);
         byte[] serialized = Utils.serialize(commit);
         File f = new File(GITLET_DIR + slash + "commits" + slash + sha1(serialized));
         Utils.writeContents(f, serialized);
+        return commit;
     }
 
+    public static void log() {
+        Commit curr = getHeadBranch().getPosition();
+        while (curr != null) {
+            printCommit(curr);
+            curr = curr.getParent();
+        }
+    }
 
+    private static void printCommit(Commit commit) {
+        Utils.message("===");
+        Utils.message("commit " + sha1(Utils.serialize(commit)));
+        if (commit.getSecondParent() != null) {
+            Utils.message("Merge: " + sha1(Utils.serialize(commit.getParent())).substring(0, 8)
+                    + " " + sha1(Utils.serialize(commit.getSecondParent())).substring(0, 8));
+        }
+        Date date = commit.getDate();
+        SimpleDateFormat f = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
+        Utils.message("Date: " + f.format(date));
+        Utils.message(commit.getMessage());
+        Utils.message("");
+    }
+
+    public static void checkout(String... args) {
+        if (args[1] == "--") {
+
+        } else if (args[2] == "--") {
+
+        } else {
+
+        }
+    }
 }
