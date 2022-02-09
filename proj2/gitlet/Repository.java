@@ -29,7 +29,9 @@ public class Repository {
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
-    private static final String slash = System.getProperty("file.separator");
+//    private static final String slash = System.getProperty("file.separator");
+
+    private static final String slash = "/";
 
     private static void makeDir() {
         String[] directory = {"blobs", "commits", "branches", "info"};
