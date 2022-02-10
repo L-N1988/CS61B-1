@@ -8,10 +8,16 @@ public class Branch implements Serializable {
 
     private String commitID;
     private String name;
+    private String pointTo;
 
-    public Branch(String name, String pointTo) {
+    public Branch(String name, String commitID) {
         this.name = name;
-        this.commitID = pointTo;
+        this.commitID = commitID;
+    }
+
+    public Branch(String pointTo) {
+        this.name = "HEAD";
+        this.pointTo = pointTo;
     }
 
     public void changeTo(String dest) {
@@ -26,5 +32,17 @@ public class Branch implements Serializable {
         return this.commitID;
     }
 
+    public String pointTo() {
+        if (name.equals("HEAD")) {
+            return pointTo;
+        } else {
+            return null;
+        }
+    }
 
+    public void changePointTo(String dest) {
+        if (name.equals("HEAD")) {
+            pointTo = dest;
+        }
+    }
 }

@@ -20,8 +20,8 @@ public class Repository {
             makeDir();
             initStagingArea();
             String initCommit = initCommit();
-            createBranch("HEAD", initCommit);
-            createBranch("master", initCommit);
+            Branch master = createBranch("master", initCommit);
+            createHEAD(master.getName());
         }
     }
 
@@ -42,13 +42,13 @@ public class Repository {
             Utils.message("No changes added to the commit.");
             System.exit(0);
         }
-        Branch HEAD = getHeadBranch();
-        String commitID = HEAD.getCommitID();
+        Branch curr = getCurrBranch();
+        String commitID = curr.getCommitID();
         Commit lastCommit = getCommitFromID(commitID);
         String newCommit = makeCommit(message, getFileSet(stagingArea, lastCommit), commitID);
 
         cleanStagingArea(stagingArea);
-        changeBranch(HEAD, newCommit);
+        changeBranch(curr, newCommit);
     }
 
     public static void rm(String fileName) {
@@ -56,8 +56,10 @@ public class Repository {
         Commit lastCommit = getLastCommit();
         if (stagingArea.contain(fileName)) {
             stagingArea.delete(fileName);
+            saveStagingArea(stagingArea);
         } else if (lastCommit.contain(fileName)) {
             stagingArea.addRemovedFiles(fileName);
+            saveStagingArea(stagingArea);
             File file = new File(CWD, fileName);
             if (file.exists()) {
                 file.delete();
@@ -69,7 +71,7 @@ public class Repository {
     }
 
     public static void log() {
-        String commitID = getHeadBranch().getCommitID();
+        String commitID = getCurrBranch().getCommitID();
         while (commitID != null) {
             commitID = printCommit(commitID);
         }
@@ -115,10 +117,10 @@ public class Repository {
     public static void checkout(String... args) {
         StagingArea stagingArea = getStagingArea();
         if (args.length == 2) {
-            Branch branch = getBranchFromName(args[1]);
-            Branch HEAD = getHeadBranch();
+            Branch dest = getBranchFromName(args[1]);
+            Branch curr = getCurrBranch();
 
-            if (branch.getCommitID().equals(HEAD.getCommitID())) {
+            if (dest.getCommitID().equals(curr.getCommitID())) {
                 Utils.message("No need to checkout the current branch.");
                 System.exit(0);
             }
@@ -129,14 +131,14 @@ public class Repository {
             }
 
             deleteAllFilesInCWD();
-            Commit commit = getCommitFromID(branch.getCommitID());
+            Commit commit = getCommitFromID(dest.getCommitID());
             Set<String> newFiles = commit.getFilesSet();
             for (String file : newFiles) {
                 commit.restoreFile(file);
             }
 
             cleanStagingArea(stagingArea);
-            changeBranch(HEAD, branch.getCommitID());
+            changeHEAD(dest.getName());
             return;
         }
         String fileName = "";

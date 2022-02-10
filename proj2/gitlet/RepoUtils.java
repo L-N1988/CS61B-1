@@ -56,9 +56,23 @@ public class RepoUtils {
         return branch;
     }
 
-    static Branch getHeadBranch() {
+    static Branch createHEAD(String pointTo) {
+        Branch HEAD = new Branch(pointTo);
         File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
-        return Utils.readObject(f, Branch.class);
+        Utils.writeObject(f, HEAD);
+        return HEAD;
+    }
+
+    static void changeHEAD(String dest) {
+        Branch HEAD = getBranchFromName("HEAD");
+        HEAD.changePointTo(dest);
+        File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
+        Utils.writeObject(f, HEAD);
+    }
+
+    static Branch getCurrBranch() {
+        String headBranch = getBranchFromName("HEAD").pointTo();
+        return getBranchFromName(headBranch);
     }
 
     static Branch changeBranch(Branch branch, String commit) {
@@ -69,7 +83,7 @@ public class RepoUtils {
     }
 
     static Commit getLastCommit() {
-        String commitID = getHeadBranch().getCommitID();
+        String commitID = getCurrBranch().getCommitID();
         return getCommitFromID(commitID);
     }
 
@@ -154,7 +168,7 @@ public class RepoUtils {
     }
 
     static void printBranches() {
-        Branch HEAD = getHeadBranch();
+        Branch HEAD = getCurrBranch();
         List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + slash + "branches");
         for (String name : branches) {
             Branch branch = getBranchFromName(name);
