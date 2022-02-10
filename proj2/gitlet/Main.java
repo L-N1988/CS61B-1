@@ -56,6 +56,18 @@ public class Main {
                 validateNumArgs(args, 1, "Incorrect operands.");
                 Repository.status();
                 break;
+            case "branch":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.branch(args[1]);
+                break;
+            case "rm-branch":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.rmBranch(args[1]);
+                break;
+            case "reset":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.reset(args[1]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

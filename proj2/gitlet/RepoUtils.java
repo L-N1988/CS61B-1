@@ -82,6 +82,11 @@ public class RepoUtils {
         return branch;
     }
 
+    static void removeBranch(String name) {
+        File f = new File(GITLET_DIR + slash + "branches" + slash + name);
+        f.delete();
+    }
+
     static Commit getLastCommit() {
         String commitID = getCurrBranch().getCommitID();
         return getCommitFromID(commitID);
@@ -168,14 +173,13 @@ public class RepoUtils {
     }
 
     static void printBranches() {
-        Branch HEAD = getCurrBranch();
+        Branch curr = getCurrBranch();
         List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + slash + "branches");
         for (String name : branches) {
-            Branch branch = getBranchFromName(name);
             if (name.equals("HEAD")) {
                 continue;
             }
-            if (branch.getCommitID().equals(HEAD.getCommitID())) {
+            if (name.equals(curr.getName())) {
                 Utils.message("*" + name);
             } else {
                 Utils.message(name);
@@ -187,12 +191,37 @@ public class RepoUtils {
     static Set<String> untrackedFile() {
         Set<String> untracked = new TreeSet<>();
         List<String> allFiles = Utils.plainFilenamesIn(CWD);
+        Commit lastCommit = getLastCommit();
+        StagingArea stagingArea = getStagingArea();
         for (String file : allFiles) {
-            if (!getLastCommit().contain(file) && !getStagingArea().track(file)) {
+            if (!lastCommit.contain(file) && !stagingArea.track(file)) {
                 untracked.add(file);
             }
         }
         return untracked;
+    }
+
+    static Set<String> modifiedFile() {
+        Set<String> modified = new TreeSet<>();
+        Commit lastCommit = getLastCommit();
+        StagingArea stagingArea = getStagingArea();
+        Set<String> set = lastCommit.getFilesSet();
+        for (String fileName : set) {
+            if (stagingArea.track(fileName)) {
+                continue;
+            }
+            File file = new File(CWD, fileName);
+            if (file.exists()) {
+                byte[] contents = Utils.readContents(file);
+                String fileID = sha1(contents);
+                if (lastCommit.contain(fileName) && lastCommit.getFileID(fileName).equals(fileID)) {
+                    modified.add(fileName + " (modified)");
+                }
+            } else {
+                modified.add(fileName + " (deleted)");
+            }
+        }
+        return modified;
     }
 
     static void deleteAllFilesInCWD() {

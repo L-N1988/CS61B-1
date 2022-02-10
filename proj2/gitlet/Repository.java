@@ -88,7 +88,7 @@ public class Repository {
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
         for (String commitID : commits) {
             Commit commit = getCommitFromID(commitID);
-            if (commit.getMessage().equals(message)) {       // TODO: Contain or equal?
+            if (commit.getMessage().equals(message)) {
                 Utils.message(commitID);
             }
         }
@@ -106,10 +106,18 @@ public class Repository {
         Utils.message("=== Removed Files ===");
         stagingArea.printRemovedFiles();
 
-        // TODO: modified and untracked
         Utils.message("=== Modifications Not Staged For Commit ===");
+        Set<String> modifiedFile = modifiedFile();
+        for (String fileName : modifiedFile) {
+            Utils.message(fileName);
+        }
         Utils.message("");
+
         Utils.message("=== Untracked Files ===");
+        Set<String> untrackedFile = untrackedFile();
+        for (String fileName : untrackedFile) {
+            Utils.message(fileName);
+        }
         Utils.message("");
     }
 
@@ -156,6 +164,60 @@ public class Repository {
         commit.restoreFile(fileName);
         stagingArea.delete(fileName);
         saveStagingArea(stagingArea);
+    }
+
+    public static void branch(String name) {
+        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        if (branchName.exists()) {
+            Utils.message("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Branch curr = getCurrBranch();
+        createBranch(name, curr.getCommitID());
+    }
+
+    public static void rmBranch(String name) {
+        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        if (!branchName.exists()) {
+            Utils.message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        Branch curr = getCurrBranch();
+        if (curr.getName().equals(name)) {
+            Utils.message("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        removeBranch(name);
+    }
+
+    public static void reset(String commitID) {
+        Branch curr = getCurrBranch();
+        Commit commit = getCommitFromID(commitID);
+        if (!untrackedFile().isEmpty()) {
+            Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        }
+        deleteAllFilesInCWD();
+        Set<String> newFiles = commit.getFilesSet();
+        for (String file : newFiles) {
+            commit.restoreFile(file);
+        }
+        StagingArea stagingArea = getStagingArea();
+        List<String> allFiles = Utils.plainFilenamesIn(CWD);
+        Set<String> set = stagingArea.getKeys();
+        for (String s : set) {
+            if (!allFiles.contains(s)) {
+                stagingArea.delete(s);
+            }
+        }
+        set = stagingArea.getRemovalFiles();
+        for (String s : set) {
+            if (!allFiles.contains(s)) {
+                stagingArea.deleteRemovedFiles(s);
+            }
+        }
+        saveStagingArea(stagingArea);
+        changeBranch(curr, commitID);
     }
 }
 

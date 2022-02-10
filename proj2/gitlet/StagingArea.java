@@ -32,7 +32,9 @@ public class StagingArea implements Serializable {
     public Set<String> getRemovalFiles() {
         return removal;
     }
-
+    public Set<String> getKeys() {
+        return files.keySet();
+    }
     public boolean contain(String name) {
         return this.files.containsKey(name);
     }
@@ -76,6 +78,9 @@ public class StagingArea implements Serializable {
 
     public void addRemovedFiles(String fileName) {
         removal.add(fileName);
+    }
+    public void deleteRemovedFiles(String fileName) {
+        removal.remove(fileName);
     }
 
     public void printStagedFiles() {
