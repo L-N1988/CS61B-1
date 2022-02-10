@@ -54,10 +54,9 @@ public class StagingArea implements Serializable {
 
             byte[] contents = Utils.readContents(file);
             String fileID = sha1(contents);
-            if (fileID == lastCommit.getFileID(fileName)) {
+            if (fileID.equals(lastCommit.getFileID(fileName))) {
                 if (files.containsKey(fileName)) {
                     files.remove(fileName);
-                    deleteBlob(fileID);
                 }
             } else {
                 files.put(fileName, fileID);
@@ -70,8 +69,8 @@ public class StagingArea implements Serializable {
 
     public void delete(String fileName) {
         if (files.containsKey(fileName)) {
-            String fileID = files.get(fileName);
-            deleteBlob(fileID);
+//            String fileID = files.get(fileName);
+//            deleteBlob(fileID);
             files.remove(fileName);
         }
     }

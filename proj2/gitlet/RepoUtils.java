@@ -241,4 +241,13 @@ public class RepoUtils {
             f.delete();
         }
     }
+
+    static void validDirectory() {
+        if (!GITLET_DIR.exists()) {
+            Utils.message("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+    }
+
+
 }

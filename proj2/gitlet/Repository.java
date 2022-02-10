@@ -27,6 +27,7 @@ public class Repository {
     }
 
     public static void add(String fileName) {
+        validDirectory();
         StagingArea stagingArea = getStagingArea();
         Commit lastCommit = getLastCommit();
         stagingArea.add(fileName, lastCommit);
@@ -34,6 +35,7 @@ public class Repository {
     }
 
     public static void commit(String message) {
+        validDirectory();
         if (message.equals("")) {
             Utils.message("Please enter a commit message.");
             System.exit(0);
@@ -53,6 +55,7 @@ public class Repository {
     }
 
     public static void rm(String fileName) {
+        validDirectory();
         StagingArea stagingArea = getStagingArea();
         Commit lastCommit = getLastCommit();
         if (stagingArea.contain(fileName)) {
@@ -61,7 +64,7 @@ public class Repository {
         } else if (lastCommit.contain(fileName)) {
             stagingArea.addRemovedFiles(fileName);
             saveStagingArea(stagingArea);
-            File file = new File(CWD, fileName);
+            File file = new File(fileName);
             if (file.exists()) {
                 file.delete();
             }
@@ -72,6 +75,7 @@ public class Repository {
     }
 
     public static void log() {
+        validDirectory();
         String commitID = getCurrBranch().getCommitID();
         while (commitID != null) {
             commitID = printCommit(commitID);
@@ -79,6 +83,7 @@ public class Repository {
     }
 
     public static void globalLog() {
+        validDirectory();
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
         for (String commitID : commits) {
             printCommit(commitID);
@@ -86,16 +91,24 @@ public class Repository {
     }
 
     public static void find(String message) {
+        validDirectory();
+        boolean found = false;
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
         for (String commitID : commits) {
             Commit commit = getCommitFromID(commitID);
             if (commit.getMessage().equals(message)) {
                 Utils.message(commitID);
+                found = true;
             }
+        }
+        if (!found) {
+            Utils.message("Found no commit with that message.");
+            System.exit(0);
         }
     }
 
     public static void status() {
+        validDirectory();
         StagingArea stagingArea = getStagingArea();
 
         Utils.message("=== Branches ===");
@@ -124,6 +137,7 @@ public class Repository {
 
 
     public static void checkout(String... args) {
+        validDirectory();
         StagingArea stagingArea = getStagingArea();
         if (args.length == 2) {
             Branch dest = getBranchFromName(args[1]);
@@ -170,6 +184,7 @@ public class Repository {
     }
 
     public static void branch(String name) {
+        validDirectory();
         File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         if (branchName.exists()) {
             Utils.message("A branch with that name already exists.");
@@ -180,6 +195,7 @@ public class Repository {
     }
 
     public static void rmBranch(String name) {
+        validDirectory();
         File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         if (!branchName.exists()) {
             Utils.message("A branch with that name does not exist.");
@@ -194,6 +210,7 @@ public class Repository {
     }
 
     public static void reset(String commitID) {
+        validDirectory();
         Branch curr = getCurrBranch();
         Commit commit = getCommitFromID(commitID);
         if (!untrackedFile().isEmpty()) {
@@ -224,5 +241,6 @@ public class Repository {
         saveStagingArea(stagingArea);
         changeBranch(curr, commitID);
     }
+
 }
 
