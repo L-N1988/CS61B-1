@@ -17,7 +17,6 @@ public class Main {
             Utils.message("Please enter a command.");
             System.exit(0);
         }
-        // TODO: what if args is empty?
         String firstArg = args[0];
         switch (firstArg) {
             case "init":

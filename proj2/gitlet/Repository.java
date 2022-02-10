@@ -14,7 +14,8 @@ public class Repository {
 
     public static void init() {
         if (GITLET_DIR.exists()) {
-            Utils.message("A Gitlet version-control system already exists in the current directory.");
+            Utils.message(
+                    "A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         } else {
             makeDir();
@@ -78,14 +79,14 @@ public class Repository {
     }
 
     public static void globalLog() {
-        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
         for (String commitID : commits) {
             printCommit(commitID);
         }
     }
 
     public static void find(String message) {
-        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
         for (String commitID : commits) {
             Commit commit = getCommitFromID(commitID);
             if (commit.getMessage().equals(message)) {
@@ -134,7 +135,9 @@ public class Repository {
             }
 
             if (!untrackedFile().isEmpty()) {
-                Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+                String msg0 = "There is an untracked file in the way; ";
+                String msg1 = "delete it, or add and commit it first.";
+                Utils.message(msg0 + msg1);
                 System.exit(0);
             }
 
@@ -167,7 +170,7 @@ public class Repository {
     }
 
     public static void branch(String name) {
-        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         if (branchName.exists()) {
             Utils.message("A branch with that name already exists.");
             System.exit(0);
@@ -177,7 +180,7 @@ public class Repository {
     }
 
     public static void rmBranch(String name) {
-        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         if (!branchName.exists()) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
@@ -194,7 +197,9 @@ public class Repository {
         Branch curr = getCurrBranch();
         Commit commit = getCommitFromID(commitID);
         if (!untrackedFile().isEmpty()) {
-            Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+            String msg0 = "There is an untracked file in the way; ";
+            String msg1 = "delete it, or add and commit it first.";
+            Utils.message(msg0 + msg1);
             System.exit(0);
         }
         deleteAllFilesInCWD();

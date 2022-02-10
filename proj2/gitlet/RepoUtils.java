@@ -17,13 +17,13 @@ public class RepoUtils {
     static final File GITLET_DIR = join(CWD, ".gitlet");
 
     //static final String slash = System.getProperty("file.separator");
-    static final String slash = "/";
+    static final String SLASH = "/";
 
     static void makeDir() {
         String[] directory = {"blobs", "commits", "branches", "info"};
         File dirs;
         for (String s : directory) {
-            dirs = new File(GITLET_DIR + slash + s);
+            dirs = new File(GITLET_DIR + SLASH + s);
             dirs.mkdirs();
         }
     }
@@ -39,35 +39,35 @@ public class RepoUtils {
     }
 
     static void saveStagingArea(StagingArea stagingArea) {
-        File f = new File(GITLET_DIR + slash + "info" + slash + "stagingArea");
+        File f = new File(GITLET_DIR + SLASH + "info" + SLASH + "stagingArea");
         Utils.writeObject(f, stagingArea);
     }
 
     static StagingArea getStagingArea() {
-        File file = new File(GITLET_DIR + slash + "info" + slash + "stagingArea");
+        File file = new File(GITLET_DIR + SLASH + "info" + SLASH + "stagingArea");
         StagingArea stagingArea = Utils.readObject(file, StagingArea.class);
         return stagingArea;
     }
 
     static Branch createBranch(String name, String pointTo) {
         Branch branch = new Branch(name, pointTo);
-        File f = new File(GITLET_DIR + slash + "branches" + slash + name);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         Utils.writeObject(f, branch);
         return branch;
     }
 
     static Branch createHEAD(String pointTo) {
-        Branch HEAD = new Branch(pointTo);
-        File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
-        Utils.writeObject(f, HEAD);
-        return HEAD;
+        Branch head = new Branch(pointTo);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + "HEAD");
+        Utils.writeObject(f, head);
+        return head;
     }
 
     static void changeHEAD(String dest) {
-        Branch HEAD = getBranchFromName("HEAD");
-        HEAD.changePointTo(dest);
-        File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
-        Utils.writeObject(f, HEAD);
+        Branch head = getBranchFromName("HEAD");
+        head.changePointTo(dest);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + "HEAD");
+        Utils.writeObject(f, head);
     }
 
     static Branch getCurrBranch() {
@@ -77,13 +77,13 @@ public class RepoUtils {
 
     static Branch changeBranch(Branch branch, String commit) {
         branch.changeTo(commit);
-        File f = new File(GITLET_DIR + slash + "branches" + slash + branch.getName());
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + branch.getName());
         Utils.writeObject(f, branch);
         return branch;
     }
 
     static void removeBranch(String name) {
-        File f = new File(GITLET_DIR + slash + "branches" + slash + name);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         f.delete();
     }
 
@@ -96,7 +96,7 @@ public class RepoUtils {
         Commit init = new Commit("initial commit", new Date(0), new TreeMap<>(), null);
         byte[] serialized = Utils.serialize(init);
         String commitID = sha1(serialized);
-        File file = new File(GITLET_DIR + slash + "commits" + slash + commitID);
+        File file = new File(GITLET_DIR + SLASH + "commits" + SLASH + commitID);
         Utils.writeContents(file, serialized);
         return commitID;
     }
@@ -105,23 +105,23 @@ public class RepoUtils {
         Commit commit = new Commit(msg, new Date(), allFiles, parent);
         byte[] serialized = Utils.serialize(commit);
         String commitID = sha1(serialized);
-        File f = new File(GITLET_DIR + slash + "commits" + slash + commitID);
+        File f = new File(GITLET_DIR + SLASH + "commits" + SLASH + commitID);
         Utils.writeContents(f, serialized);
         return commitID;
     }
 
     static void deleteBlob(String fileID) {
-        File file = new File(GITLET_DIR + slash + "blobs" + slash + fileID);
+        File file = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
         file.delete();
     }
 
     static void writeBlob(byte[] contents, String fileID) {
-        File file = new File(GITLET_DIR + slash + "blobs" + slash + fileID);
+        File file = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
         Utils.writeContents(file, contents);
     }
 
     static void readBlob(String fileName, String fileID) {
-        File blob = new File(GITLET_DIR + slash + "blobs" + slash + fileID);
+        File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
         File file = new File(fileName);
         Utils.writeContents(file, Utils.readContents(blob));
     }
@@ -131,7 +131,8 @@ public class RepoUtils {
         Utils.message("===");
         Utils.message("commit " + sha1(Utils.serialize(commit)));
         if (commit.getSecondParent() != null) {
-            Utils.message("Merge: " + sha1(Utils.serialize(commit.getParent())).substring(0, 8) + " " + sha1(Utils.serialize(commit.getSecondParent())).substring(0, 8));
+            Utils.message("Merge: " + sha1(Utils.serialize(commit.getParent())).substring(0, 8)
+                    + " " + sha1(Utils.serialize(commit.getSecondParent())).substring(0, 8));
         }
         Date date = commit.getDate();
         SimpleDateFormat f = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
@@ -144,14 +145,14 @@ public class RepoUtils {
 
     static Commit getCommitFromID(String id) {
         if (id.length() < 40) {
-            List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+            List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
             for (String s : commits) {
                 if (s.startsWith(id)) { // ignore duplicate
                     id = s;
                 }
             }
         }
-        File commitID = new File(GITLET_DIR + slash + "commits" + slash + id);
+        File commitID = new File(GITLET_DIR + SLASH + "commits" + SLASH + id);
         if (!commitID.exists()) {
             Utils.message("No commit with that id exists.");
             System.exit(0);
@@ -160,7 +161,7 @@ public class RepoUtils {
     }
 
     static Branch getBranchFromName(String name) {
-        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
         if (!branchName.exists()) {
             Utils.message("No such branch exists.");
             System.exit(0);
@@ -182,7 +183,7 @@ public class RepoUtils {
 
     static void printBranches() {
         Branch curr = getCurrBranch();
-        List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + slash + "branches");
+        List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "branches");
         for (String name : branches) {
             if (name.equals("HEAD")) {
                 continue;
@@ -222,7 +223,8 @@ public class RepoUtils {
             if (file.exists()) {
                 byte[] contents = Utils.readContents(file);
                 String fileID = sha1(contents);
-                if (lastCommit.contain(fileName) && !lastCommit.getFileID(fileName).equals(fileID)) {
+                if (lastCommit.contain(fileName)
+                        && !lastCommit.getFileID(fileName).equals(fileID)) {
                     modified.add(fileName + " (modified)");
                 }
             } else {

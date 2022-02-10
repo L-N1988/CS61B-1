@@ -43,7 +43,7 @@ public class StagingArea implements Serializable {
     }
 
     public void add(String fileName, Commit lastCommit) {
-        File file = new File(CWD, fileName);
+        File file = new File(fileName);
         if (!file.exists()) {
             Utils.message("File does not exist.");
             System.exit(0);
