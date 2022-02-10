@@ -93,7 +93,7 @@ public class RepoUtils {
 
     static void deleteBlob(String fileID) {
         File file = new File(GITLET_DIR + slash + "blobs" + slash + fileID);
-        restrictedDelete(file);
+        file.delete();
     }
 
     static void writeBlob(byte[] contents, String fileID) {

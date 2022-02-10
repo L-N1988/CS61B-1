@@ -68,8 +68,8 @@ public class StagingArea implements Serializable {
 
     public void delete(String fileName) {
         if (files.containsKey(fileName)) {
-            String sha1 = files.get(fileName);
-            deleteBlob(sha1);
+            String fileID = files.get(fileName);
+            deleteBlob(fileID);
             files.remove(fileName);
         }
     }
