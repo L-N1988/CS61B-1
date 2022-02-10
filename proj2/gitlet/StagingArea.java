@@ -2,10 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import static gitlet.RepoUtils.*;
 import static gitlet.Utils.sha1;
@@ -15,6 +12,7 @@ public class StagingArea implements Serializable {
     private static final long serialVersionUID = 4449685098267757691L;
     private Map<String, String> files = new TreeMap<>();
     private Set<String> removal = new TreeSet<>();
+    private Set<String> canDeleteBlob = new TreeSet<>();
 
     public Map<String, String> getFiles() {
         return files;
@@ -23,6 +21,7 @@ public class StagingArea implements Serializable {
     public void clean() {
         files = new TreeMap<>();
         removal = new TreeSet<>();
+        canDeleteBlob = new TreeSet<>();
     }
 
     public boolean isEmpty() {
@@ -32,12 +31,15 @@ public class StagingArea implements Serializable {
     public Set<String> getRemovalFiles() {
         return removal;
     }
+
     public Set<String> getKeys() {
         return files.keySet();
     }
+
     public boolean contain(String name) {
         return this.files.containsKey(name);
     }
+
     public boolean track(String name) {
         return this.files.containsKey(name) || this.removal.contains(name);
     }
@@ -55,11 +57,13 @@ public class StagingArea implements Serializable {
             byte[] contents = Utils.readContents(file);
             String fileID = sha1(contents);
             if (fileID.equals(lastCommit.getFileID(fileName))) {
-                if (files.containsKey(fileName)) {
-                    files.remove(fileName);
-                }
+                delete(fileName);
             } else {
                 files.put(fileName, fileID);
+                List<String> blobs = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "blobs");
+                if (!blobs.contains(fileID)) {
+                    canDeleteBlob.add(fileID);
+                }
                 writeBlob(contents, fileID);
             }
 
@@ -69,8 +73,10 @@ public class StagingArea implements Serializable {
 
     public void delete(String fileName) {
         if (files.containsKey(fileName)) {
-//            String fileID = files.get(fileName);
-//            deleteBlob(fileID);
+            String fileID = files.get(fileName);
+            if (canDeleteBlob.contains(fileID)) {
+                deleteBlob(fileID);
+            }
             files.remove(fileName);
         }
     }
@@ -78,6 +84,7 @@ public class StagingArea implements Serializable {
     public void addRemovedFiles(String fileName) {
         removal.add(fileName);
     }
+
     public void deleteRemovedFiles(String fileName) {
         removal.remove(fileName);
     }

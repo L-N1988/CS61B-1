@@ -142,26 +142,12 @@ public class Repository {
         if (args.length == 2) {
             Branch dest = getBranchFromName(args[1]);
             Branch curr = getCurrBranch();
-
-            if (dest.getCommitID().equals(curr.getCommitID())) {
+            if (dest.getName().equals(curr.getName())) {
                 Utils.message("No need to checkout the current branch.");
                 System.exit(0);
             }
-
-            if (!untrackedFile().isEmpty()) {
-                String msg0 = "There is an untracked file in the way; ";
-                String msg1 = "delete it, or add and commit it first.";
-                Utils.message(msg0 + msg1);
-                System.exit(0);
-            }
-
-            deleteAllFilesInCWD();
             Commit commit = getCommitFromID(dest.getCommitID());
-            Set<String> newFiles = commit.getFilesSet();
-            for (String file : newFiles) {
-                commit.restoreFile(file);
-            }
-
+            setCommit(commit);
             cleanStagingArea(stagingArea);
             changeHEAD(dest.getName());
             return;
@@ -213,17 +199,7 @@ public class Repository {
         validDirectory();
         Branch curr = getCurrBranch();
         Commit commit = getCommitFromID(commitID);
-        if (!untrackedFile().isEmpty()) {
-            String msg0 = "There is an untracked file in the way; ";
-            String msg1 = "delete it, or add and commit it first.";
-            Utils.message(msg0 + msg1);
-            System.exit(0);
-        }
-        deleteAllFilesInCWD();
-        Set<String> newFiles = commit.getFilesSet();
-        for (String file : newFiles) {
-            commit.restoreFile(file);
-        }
+        setCommit(commit);
         StagingArea stagingArea = getStagingArea();
         List<String> allFiles = Utils.plainFilenamesIn(CWD);
         Set<String> set = stagingArea.getKeys();
@@ -242,5 +218,9 @@ public class Repository {
         changeBranch(curr, commitID);
     }
 
+
+    public static void merge(String branchName) {
+
+    }
 }
 

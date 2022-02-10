@@ -67,6 +67,10 @@ public class Main {
                 validateNumArgs(args, 2, "Incorrect operands.");
                 Repository.reset(args[1]);
                 break;
+            case "merge":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.merge(args[1]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

@@ -149,6 +149,7 @@ public class RepoUtils {
             for (String s : commits) {
                 if (s.startsWith(id)) { // ignore duplicate
                     id = s;
+                    break;
                 }
             }
         }
@@ -249,5 +250,18 @@ public class RepoUtils {
         }
     }
 
+    static void setCommit(Commit commit) {
+        if (!untrackedFile().isEmpty()) {
+            String msg0 = "There is an untracked file in the way; ";
+            String msg1 = "delete it, or add and commit it first.";
+            Utils.message(msg0 + msg1);
+            System.exit(0);
+        }
+        deleteAllFilesInCWD();
+        Set<String> newFiles = commit.getFilesSet();
+        for (String file : newFiles) {
+            commit.restoreFile(file);
+        }
+    }
 
 }
