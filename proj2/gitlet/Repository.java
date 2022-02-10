@@ -8,17 +8,10 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
  * @author Christina0031
  */
 public class Repository {
-    /**
-     * List all instance variables of the Repository class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided two examples for you.
-     */
 
     /**
      * The current working directory.
@@ -42,19 +35,20 @@ public class Repository {
         }
     }
 
-    private static Branch createBranch(String name, Commit pointTo) {
+    private static Branch createBranch(String name, String pointTo) {
         Branch branch = new Branch(name, pointTo);
         File f = new File(GITLET_DIR + slash + "branches" + slash + name);
         Utils.writeObject(f, branch);
         return branch;
     }
 
-    public static Commit initCommit() {
-        Commit init = new Commit("initial commit", new Date(0), new TreeMap<String, String>(), null);
+    public static String initCommit() {
+        Commit init = new Commit("initial commit", new Date(0), new TreeMap<>(), null);
         byte[] serialized = Utils.serialize(init);
-        File f = new File(GITLET_DIR + slash + "commits" + slash + sha1(serialized));
-        Utils.writeContents(f, serialized);
-        return init;
+        String sha1 = sha1(serialized);
+        File file = new File(GITLET_DIR + slash + "commits" + slash + sha1);
+        Utils.writeContents(file, serialized);
+        return sha1;
     }
 
     private static void initStagingArea() {
@@ -79,7 +73,7 @@ public class Repository {
         } else {
             makeDir();
             initStagingArea();
-            Commit initCommit = initCommit();
+            String initCommit = initCommit();
             createBranch("HEAD", initCommit);
             createBranch("master", initCommit);
         }
@@ -103,21 +97,22 @@ public class Repository {
             System.exit(0);
         } else {
             StagingArea stagingArea = getStagingArea();
-            Commit lastCommit = getHeadBranch().getPosition();
+            String commitID = getHeadBranch().getPosition();
+            Commit lastCommit = getCommitFromID(commitID);
             addToStagingArea(fileName, stagingArea, lastCommit);
         }
     }
 
     public static void addToStagingArea(String fileName, StagingArea stagingArea, Commit lastCommit) {
         File file = new File(CWD, fileName);
-        byte[] serialized = Utils.serialize(file);
+        byte[] contents = Utils.readContents(file);
         Map<String, String> map = stagingArea.getFiles();
 
         if (stagingArea.getRemovalFiles().contains(fileName)) {
             stagingArea.getRemovalFiles().remove(fileName);
         }
 
-        String sha1 = sha1(serialized);
+        String sha1 = sha1(contents);
         if (sha1 == lastCommit.getSHA1(fileName)) {
             if (map.containsKey(fileName)) {
                 map.remove(fileName);
@@ -126,7 +121,7 @@ public class Repository {
             return;
         }
         map.put(fileName, sha1);
-        writeFile(serialized, sha1);
+        writeFile(contents, sha1);
         saveStagingArea(stagingArea);
     }
 
@@ -146,9 +141,9 @@ public class Repository {
         restrictedDelete(file);
     }
 
-    private static void writeFile(byte[] serialized, String sha1) {
+    private static void writeFile(byte[] contents, String sha1) {
         File file = new File(GITLET_DIR + slash + "blobs" + slash + sha1);
-        Utils.writeContents(file, serialized);
+        Utils.writeContents(file, contents);
     }
 
 
@@ -159,7 +154,8 @@ public class Repository {
             System.exit(0);
         }
         Branch head = getHeadBranch();
-        Commit lastCommit = head.getPosition();
+        String lastCommitSHA1 = head.getPosition();
+        Commit lastCommit = getCommitFromID(head.getPosition());
 
         Map<String, String> files = stagingArea.getFiles();
         Map<String, String> originFiles = lastCommit.getFiles();
@@ -172,7 +168,7 @@ public class Repository {
             originFiles.put(name, files.get(name));
         }
 
-        Commit newCommit = makeCommit(message, originFiles, lastCommit);
+        String newCommit = makeCommit(message, originFiles, lastCommitSHA1);
         cleanStagingArea(stagingArea);
         changeBranch(head, newCommit);
     }
@@ -184,7 +180,7 @@ public class Repository {
             deleteFromStagingArea(fileName);
             return;
         }
-        Commit lastCommit = getHeadBranch().getPosition();
+        Commit lastCommit = getCommitFromID(getHeadBranch().getPosition());
         if (lastCommit.getFiles().containsKey(fileName)) {
             stagingArea.getRemovalFiles().add(fileName);
             File file = new File(CWD, fileName);
@@ -197,30 +193,31 @@ public class Repository {
         System.exit(0);
     }
 
-    private static Branch changeBranch(Branch branch, Commit commit) {
+    private static Branch changeBranch(Branch branch, String commit) {
         branch.changeTo(commit);
         File f = new File(GITLET_DIR + slash + "branches" + slash + branch.getName());
         Utils.writeObject(f, branch);
         return branch;
     }
 
-    public static Commit makeCommit(String msg, Map<String, String> allFiles, Commit parent) {
+    public static String makeCommit(String msg, Map<String, String> allFiles, String parent) {
         Commit commit = new Commit(msg, new Date(), allFiles, parent);
         byte[] serialized = Utils.serialize(commit);
-        File f = new File(GITLET_DIR + slash + "commits" + slash + sha1(serialized));
+        String sha1 = sha1(serialized);
+        File f = new File(GITLET_DIR + slash + "commits" + slash + sha1);
         Utils.writeContents(f, serialized);
-        return commit;
+        return sha1;
     }
 
     public static void log() {
-        Commit curr = getHeadBranch().getPosition();
-        while (curr != null) {
-            printCommit(curr);
-            curr = curr.getParent();
+        String currSHA1 = getHeadBranch().getPosition();
+        while (currSHA1 != null) {
+            currSHA1 = printCommit(currSHA1);
         }
     }
 
-    private static void printCommit(Commit commit) {
+    private static String printCommit(String sha1) {
+        Commit commit = getCommitFromID(sha1);
         Utils.message("===");
         Utils.message("commit " + sha1(Utils.serialize(commit)));
         if (commit.getSecondParent() != null) {
@@ -232,13 +229,14 @@ public class Repository {
         Utils.message("Date: " + f.format(date));
         Utils.message(commit.getMessage());
         Utils.message("");
+
+        return commit.getParent();
     }
 
     public static void globalLog() {
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
         for (String commitID : commits) {
-            Commit commit = getCommitFromID(commitID);
-            printCommit(commit);
+            printCommit(commitID);
         }
     }
 
@@ -246,7 +244,7 @@ public class Repository {
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
         for (String commitID : commits) {
             Commit commit = getCommitFromID(commitID);
-            if (commit.getMessage() == message) {       // TODO: Contain or equal?
+            if (commit.getMessage().equals(message)) {       // TODO: Contain or equal?
                 Utils.message(commitID);
             }
         }
@@ -256,8 +254,7 @@ public class Repository {
         String sha1 = commit.getSHA1(name);
         File blob = new File(GITLET_DIR + slash + "blobs" + slash + sha1);
         File file = new File(name);
-        byte[] contents = Utils.readContents(blob);
-        Utils.writeContents(file, contents);
+        Utils.writeContents(file, Utils.readContents(blob));
     }
 
     private static void getFileFromCommit(Commit commit, String fileName) {
@@ -330,10 +327,10 @@ public class Repository {
 
 
     public static void checkout(String... args) {
-        if (args[1] == "--") {
-            Commit commit = getHeadBranch().getPosition();
+        if (args[1].equals("--")) {
+            Commit commit = getCommitFromID(getHeadBranch().getPosition());
             getFileFromCommit(commit, args[2]);
-        } else if (args[2] == "--") {
+        } else if (args[2].equals("--")) {
             Commit commit = getCommitFromID(args[1]);
             getFileFromCommit(commit, args[3]);
         } else {
@@ -344,19 +341,19 @@ public class Repository {
                 System.exit(0);
             }
             List<String> allFiles = Utils.plainFilenamesIn(CWD);
-            for (String file: allFiles) {
-                if (!currentBranch.getPosition().getFiles().containsKey(file)
+            for (String file : allFiles) {
+                if (!getCommitFromID(currentBranch.getPosition()).getFiles().containsKey(file)
                         && !getStagingArea().getFiles().containsKey(file)) {
                     Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
-            for (String file: allFiles) {
+            for (String file : allFiles) {
                 Utils.restrictedDelete(file);
             }
-            Map<String, String> newFiles = branch.getPosition().getFiles();
-            for (String file: newFiles.keySet()) {
-                readFile(file, branch.getPosition());
+            Map<String, String> newFiles = getCommitFromID(branch.getPosition()).getFiles();
+            for (String file : newFiles.keySet()) {
+                readFile(file, getCommitFromID(branch.getPosition()));
             }
 
             cleanStagingArea(getStagingArea());

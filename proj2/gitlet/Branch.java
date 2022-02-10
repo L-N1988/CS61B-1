@@ -6,23 +6,23 @@ public class Branch implements Serializable {
 
     private static final long serialVersionUID = 2229685098267757691L;
 
-    private Commit pointTo;
+    private String pointToCommit;
     private String name;
 
-    public Branch(String name, Commit pointTo) {
+    public Branch(String name, String pointTo) {
         this.name = name;
-        this.pointTo = pointTo;
+        this.pointToCommit = pointTo;
     }
 
-    public void changeTo(Commit dest) {
-        this.pointTo = dest;
+    public void changeTo(String dest) {
+        this.pointToCommit = dest;
     }
 
     public String getName() {
         return this.name;
     }
 
-    public Commit getPosition() {
-        return this.pointTo;
+    public String getPosition() {
+        return this.pointToCommit;
     }
 }

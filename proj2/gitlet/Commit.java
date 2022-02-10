@@ -24,17 +24,17 @@ public class Commit implements Serializable {
     private String message;
     private Date timestamp;
     private Map<String, String> files;
-    private Commit parent;
-    private Commit secondParent = null;
+    private String parent;
+    private String secondParent = null;
 
-    public Commit(String msg, Date timestamp, Map<String, String> files, Commit parent) {
+    public Commit(String msg, Date timestamp, Map<String, String> files, String parent) {
         this.files = files;
         this.timestamp = timestamp;
         this.message = msg;
         this.parent = parent;
     }
 
-    public Commit(String msg, Map<String, String> files, Commit parent) {
+    public Commit(String msg, Map<String, String> files, String parent) {
         this.files = files;
         this.timestamp = new Date();
         this.message = msg;
@@ -52,7 +52,7 @@ public class Commit implements Serializable {
         return files;
     }
 
-    public Commit getParent() {
+    public String getParent() {
         return this.parent;
     }
 
@@ -64,7 +64,7 @@ public class Commit implements Serializable {
         return this.message;
     }
 
-    public Commit getSecondParent() {
+    public String getSecondParent() {
         return this.secondParent;
     }
 }
