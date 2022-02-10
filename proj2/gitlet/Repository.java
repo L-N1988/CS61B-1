@@ -113,6 +113,10 @@ public class Repository {
         byte[] serialized = Utils.serialize(file);
         Map<String, String> map = stagingArea.getFiles();
 
+        if (stagingArea.getRemovalFiles().contains(fileName)) {
+            stagingArea.getRemovalFiles().remove(fileName);
+        }
+
         String sha1 = sha1(serialized);
         if (sha1 == lastCommit.getSHA1(fileName)) {
             if (map.containsKey(fileName)) {
@@ -123,6 +127,17 @@ public class Repository {
         }
         map.put(fileName, sha1);
         writeFile(serialized, sha1);
+        saveStagingArea(stagingArea);
+    }
+
+    private static void deleteFromStagingArea(String fileName) {
+        StagingArea stagingArea = getStagingArea();
+        Map<String, String> map = stagingArea.getFiles();
+        if (map.containsKey(fileName)) {
+            String sha1 = map.get(fileName);
+            deleteFile(sha1);
+            map.remove(fileName);
+        }
         saveStagingArea(stagingArea);
     }
 
@@ -148,6 +163,10 @@ public class Repository {
 
         Map<String, String> files = stagingArea.getFiles();
         Map<String, String> originFiles = lastCommit.getFiles();
+        for (String name : stagingArea.getRemovalFiles()) {
+            originFiles.remove(name);
+        }
+
         Set<String> stagedFiles = files.keySet();
         for (String name : stagedFiles) {
             originFiles.put(name, files.get(name));
@@ -156,6 +175,26 @@ public class Repository {
         Commit newCommit = makeCommit(message, originFiles, lastCommit);
         cleanStagingArea(stagingArea);
         changeBranch(head, newCommit);
+    }
+
+
+    public static void rm(String fileName) {
+        StagingArea stagingArea = getStagingArea();
+        if (stagingArea.getFiles().containsKey(fileName)) {
+            deleteFromStagingArea(fileName);
+            return;
+        }
+        Commit lastCommit = getHeadBranch().getPosition();
+        if (lastCommit.getFiles().containsKey(fileName)) {
+            stagingArea.getRemovalFiles().add(fileName);
+            File file = new File(CWD, fileName);
+            if (file.exists()) {
+                restrictedDelete(file);
+            }
+            return;
+        }
+        Utils.message("No reason to remove the file.");
+        System.exit(0);
     }
 
     private static Branch changeBranch(Branch branch, Commit commit) {
@@ -195,13 +234,134 @@ public class Repository {
         Utils.message("");
     }
 
+    public static void globalLog() {
+        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+        for (String commitID : commits) {
+            Commit commit = getCommitFromID(commitID);
+            printCommit(commit);
+        }
+    }
+
+    public static void find(String message) {
+        List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+        for (String commitID : commits) {
+            Commit commit = getCommitFromID(commitID);
+            if (commit.getMessage() == message) {       // TODO: Contain or equal?
+                Utils.message(commitID);
+            }
+        }
+    }
+
+    private static void readFile(String name, Commit commit) {
+        String sha1 = commit.getSHA1(name);
+        File blob = new File(GITLET_DIR + slash + "blobs" + slash + sha1);
+        File file = new File(name);
+        byte[] contents = Utils.readContents(blob);
+        Utils.writeContents(file, contents);
+    }
+
+    private static void getFileFromCommit(Commit commit, String fileName) {
+        if (!commit.getFiles().containsKey(fileName)) {
+            Utils.message("File does not exist in that commit.");
+            System.exit(0);
+        } else {
+            readFile(fileName, commit);
+            deleteFromStagingArea(fileName);
+        }
+    }
+
+    private static Commit getCommitFromID(String id) {
+        File commitID = new File(GITLET_DIR + slash + "commits" + slash + id);
+        if (!commitID.exists()) {
+            Utils.message("No commit with that id exists.");
+            System.exit(0);
+        }
+        return Utils.readObject(commitID, Commit.class);
+    }
+
+    private static Branch getBranchFromName(String name) {
+        File branchName = new File(GITLET_DIR + slash + "branches" + slash + name);
+        if (!branchName.exists()) {
+            Utils.message("No such branch exists.");
+            System.exit(0);
+        }
+        return Utils.readObject(branchName, Branch.class);
+    }
+
+    public static void status() {
+        Branch headBranch = getHeadBranch();
+        List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + slash + "branches");
+        Utils.message("=== Branches ===");
+        for (String b : branches) {
+            Branch branch = getBranchFromName(b);
+            if (branch.getName() == headBranch.getName()) {
+                continue;
+            }
+            if (branch.getPosition() == headBranch.getPosition()) {
+                Utils.message("*" + branch.getName());
+            } else {
+                Utils.message(branch.getName());
+            }
+        }
+        Utils.message("");
+
+        Utils.message("=== Staged Files ===");
+        StagingArea stagingArea = getStagingArea();
+        Map<String, String> map = stagingArea.getFiles();
+        Set<String> set = map.keySet();
+        for (String name : set) {
+            Utils.message(name);
+        }
+        Utils.message("");
+
+        Utils.message("=== Removed Files ===");
+        Set<String> removalFiles = stagingArea.getRemovalFiles();
+        for (String name : removalFiles) {
+            Utils.message(name);
+        }
+        Utils.message("");
+
+        // TODO: modified and untracked
+        Utils.message("=== Modifications Not Staged For Commit ===");
+        Utils.message("");
+        Utils.message("=== Untracked Files ===");
+        Utils.message("");
+    }
+
+
     public static void checkout(String... args) {
         if (args[1] == "--") {
-
+            Commit commit = getHeadBranch().getPosition();
+            getFileFromCommit(commit, args[2]);
         } else if (args[2] == "--") {
-
+            Commit commit = getCommitFromID(args[1]);
+            getFileFromCommit(commit, args[3]);
         } else {
+            Branch branch = getBranchFromName(args[1]);
+            Branch currentBranch = getHeadBranch();
+            if (branch.getPosition() == currentBranch.getPosition()) {
+                Utils.message("No need to checkout the current branch.");
+                System.exit(0);
+            }
+            List<String> allFiles = Utils.plainFilenamesIn(CWD);
+            for (String file: allFiles) {
+                if (!currentBranch.getPosition().getFiles().containsKey(file)
+                        && !getStagingArea().getFiles().containsKey(file)) {
+                    Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+            for (String file: allFiles) {
+                Utils.restrictedDelete(file);
+            }
+            Map<String, String> newFiles = branch.getPosition().getFiles();
+            for (String file: newFiles.keySet()) {
+                readFile(file, branch.getPosition());
+            }
 
+            cleanStagingArea(getStagingArea());
+            changeBranch(currentBranch, branch.getPosition());
         }
     }
 }
+

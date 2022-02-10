@@ -32,13 +32,29 @@ public class Main {
                 validateNumArgs(args, 2, "Please enter a commit message.");
                 Repository.commit(args[1]);
                 break;
+            case "rm":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.rm(args[1]);
+                break;
             case "log":
                 validateNumArgs(args, 1, "Incorrect operands.");
                 Repository.log();
                 break;
+            case "global-log":
+                validateNumArgs(args, 1, "Incorrect operands.");
+                Repository.globalLog();
+                break;
+            case "find":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.find(args[1]);
+                break;
             case "checkout":
                 validateNumArgs(args, 2, 4, "Incorrect operands.");
                 Repository.checkout(args);
+                break;
+            case "status":
+                validateNumArgs(args, 1, "Incorrect operands.");
+                Repository.status();
                 break;
             default:
                 Utils.message("No command with that name exists.");
