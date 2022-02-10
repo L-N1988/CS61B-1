@@ -264,4 +264,31 @@ public class RepoUtils {
         }
     }
 
+    static String splitPoint(Branch curr, Branch given) {
+        String cid = curr.getCommitID();
+        String gid = given.getCommitID();
+        String originCurr = cid;
+        String originGiven = gid;
+        Commit c = getCommitFromID(cid);
+        Commit g = getCommitFromID(gid);
+        while (!cid.equals(gid)) {
+            int cmp = c.getDate().compareTo(g.getDate());
+            if (cmp > 0) {
+                cid = c.getParent();
+                c = getCommitFromID(cid);
+            } else if (cmp <= 0 && !cid.equals(gid)) {
+                gid = g.getParent();
+                g = getCommitFromID(gid);
+            }
+        }
+        if (cid.equals(originCurr)) {
+            Utils.message("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+        if (cid.equals(originGiven)) {
+            Utils.message("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+        return cid;
+    }
 }

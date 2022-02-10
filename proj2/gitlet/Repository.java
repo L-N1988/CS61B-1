@@ -220,6 +220,32 @@ public class Repository {
 
 
     public static void merge(String branchName) {
+        StagingArea stagingArea = getStagingArea();
+        if (!stagingArea.isEmpty()) {
+            Utils.message("You have uncommitted changes.");
+            System.exit(0);
+        }
+        File file = new File(GITLET_DIR + SLASH + "branches" + SLASH + branchName);
+        if (!file.exists()) {
+            Utils.message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        Branch given = Utils.readObject(file, Branch.class);
+        Branch curr = getCurrBranch();
+        if (curr.getName().equals(given.getName())) {
+            Utils.message("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+        if (!untrackedFile().isEmpty()) {
+            String msg0 = "There is an untracked file in the way; ";
+            String msg1 = "delete it, or add and commit it first.";
+            Utils.message(msg0 + msg1);
+            System.exit(0);
+        }
+
+        String splitPointID = splitPoint(curr, given);
+
+        // no changes in it, just normal commit error message
 
     }
 }
