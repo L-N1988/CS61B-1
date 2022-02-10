@@ -143,6 +143,14 @@ public class RepoUtils {
     }
 
     static Commit getCommitFromID(String id) {
+        if (id.length() < 40) {
+            List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + slash + "commits");
+            for (String s : commits) {
+                if (s.startsWith(id)) { // ignore duplicate
+                    id = s;
+                }
+            }
+        }
         File commitID = new File(GITLET_DIR + slash + "commits" + slash + id);
         if (!commitID.exists()) {
             Utils.message("No commit with that id exists.");
@@ -210,11 +218,11 @@ public class RepoUtils {
             if (stagingArea.track(fileName)) {
                 continue;
             }
-            File file = new File(CWD, fileName);
+            File file = new File(fileName);
             if (file.exists()) {
                 byte[] contents = Utils.readContents(file);
                 String fileID = sha1(contents);
-                if (lastCommit.contain(fileName) && lastCommit.getFileID(fileName).equals(fileID)) {
+                if (lastCommit.contain(fileName) && !lastCommit.getFileID(fileName).equals(fileID)) {
                     modified.add(fileName + " (modified)");
                 }
             } else {
