@@ -3,6 +3,9 @@ package gitlet;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
+
+import static gitlet.RepoUtils.readBlob;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -41,7 +44,7 @@ public class Commit implements Serializable {
         this.parent = parent;
     }
 
-    public String getSHA1(String fileName) {
+    public String getFileID(String fileName) {
         if (files.containsKey(fileName)) {
             return files.get(fileName);
         }
@@ -52,6 +55,9 @@ public class Commit implements Serializable {
         return files;
     }
 
+    public Set<String> getFilesSet() {
+        return files.keySet();
+    }
 
     public boolean contain(String name) {
         return this.files.containsKey(name);
@@ -71,5 +77,14 @@ public class Commit implements Serializable {
 
     public String getSecondParent() {
         return this.secondParent;
+    }
+
+    public void restoreFile(String fileName) {
+        if (!contain(fileName)) {
+            Utils.message("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String fileID = getFileID(fileName);
+        readBlob(fileName, fileID);
     }
 }

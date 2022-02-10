@@ -1,11 +1,13 @@
 package gitlet;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import static gitlet.RepoUtils.*;
 import static gitlet.Utils.sha1;
 
 public class StagingArea implements Serializable {
@@ -24,7 +26,7 @@ public class StagingArea implements Serializable {
     }
 
     public boolean isEmpty() {
-        return files.isEmpty();
+        return files.isEmpty() && removal.isEmpty();
     }
 
     public Set<String> getRemovalFiles() {
@@ -34,7 +36,60 @@ public class StagingArea implements Serializable {
     public boolean contain(String name) {
         return this.files.containsKey(name);
     }
+    public boolean track(String name) {
+        return this.files.containsKey(name) || this.removal.contains(name);
+    }
 
+    public void add(String fileName, Commit lastCommit) {
+        File file = new File(CWD, fileName);
+        if (!file.exists()) {
+            Utils.message("File does not exist.");
+            System.exit(0);
+        } else {
+            if (removal.contains(fileName)) {
+                removal.remove(fileName);
+            }
 
+            byte[] contents = Utils.readContents(file);
+            String fileID = sha1(contents);
+            if (fileID == lastCommit.getFileID(fileName)) {
+                if (files.containsKey(fileName)) {
+                    files.remove(fileName);
+                    deleteBlob(fileID);
+                }
+            } else {
+                files.put(fileName, fileID);
+                writeBlob(contents, fileID);
+            }
 
+        }
+
+    }
+
+    public void delete(String fileName) {
+        if (files.containsKey(fileName)) {
+            String sha1 = files.get(fileName);
+            deleteBlob(sha1);
+            files.remove(fileName);
+        }
+    }
+
+    public void addRemovedFiles(String fileName) {
+        removal.add(fileName);
+    }
+
+    public void printStagedFiles() {
+        Set<String> set = files.keySet();
+        for (String name : set) {
+            Utils.message(name);
+        }
+        Utils.message("");
+    }
+
+    public void printRemovedFiles() {
+        for (String name : removal) {
+            Utils.message(name);
+        }
+        Utils.message("");
+    }
 }
