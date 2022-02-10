@@ -28,19 +28,13 @@ public class Repository {
 
     private static void makeDir() {
         String[] directory = {"blobs", "commits", "branches", "info"};
-        File f;
+        File dirs;
         for (String s : directory) {
-            f = new File(GITLET_DIR + slash + s);
-            f.mkdirs();
+            dirs = new File(GITLET_DIR + slash + s);
+            dirs.mkdirs();
         }
     }
 
-    private static Branch createBranch(String name, String pointTo) {
-        Branch branch = new Branch(name, pointTo);
-        File f = new File(GITLET_DIR + slash + "branches" + slash + name);
-        Utils.writeObject(f, branch);
-        return branch;
-    }
 
     public static String initCommit() {
         Commit init = new Commit("initial commit", new Date(0), new TreeMap<>(), null);
@@ -66,6 +60,13 @@ public class Repository {
         Utils.writeObject(f, stagingArea);
     }
 
+    private static Branch createBranch(String name, String pointTo) {
+        Branch branch = new Branch(name, pointTo);
+        File f = new File(GITLET_DIR + slash + "branches" + slash + name);
+        Utils.writeObject(f, branch);
+        return branch;
+    }
+
     public static void init() {
         if (GITLET_DIR.exists()) {
             Utils.message("A Gitlet version-control system already exists in the current directory.");
@@ -80,14 +81,19 @@ public class Repository {
     }
 
     private static StagingArea getStagingArea() {
-        File f = new File(GITLET_DIR + slash + "info" + slash + "stagingArea");
-        StagingArea stagingArea = Utils.readObject(f, StagingArea.class);
+        File file = new File(GITLET_DIR + slash + "info" + slash + "stagingArea");
+        StagingArea stagingArea = Utils.readObject(file, StagingArea.class);
         return stagingArea;
     }
 
     private static Branch getHeadBranch() {
         File f = new File(GITLET_DIR + slash + "branches" + slash + "HEAD");
         return Utils.readObject(f, Branch.class);
+    }
+
+    private static Commit getLastCommit() {
+        String commitID = getHeadBranch().getCurrCommit();
+        return getCommitFromID(commitID);
     }
 
     public static void add(String fileName) {
@@ -97,8 +103,7 @@ public class Repository {
             System.exit(0);
         } else {
             StagingArea stagingArea = getStagingArea();
-            String commitID = getHeadBranch().getPosition();
-            Commit lastCommit = getCommitFromID(commitID);
+            Commit lastCommit = getLastCommit();
             addToStagingArea(fileName, stagingArea, lastCommit);
         }
     }
@@ -153,9 +158,9 @@ public class Repository {
             Utils.message("No changes added to the commit.");
             System.exit(0);
         }
-        Branch head = getHeadBranch();
-        String lastCommitSHA1 = head.getPosition();
-        Commit lastCommit = getCommitFromID(head.getPosition());
+        Branch HEAD = getHeadBranch();
+        String lastCommitSHA1 = HEAD.getCurrCommit();
+        Commit lastCommit = getCommitFromID(HEAD.getCurrCommit());
 
         Map<String, String> files = stagingArea.getFiles();
         Map<String, String> originFiles = lastCommit.getFiles();
@@ -170,18 +175,18 @@ public class Repository {
 
         String newCommit = makeCommit(message, originFiles, lastCommitSHA1);
         cleanStagingArea(stagingArea);
-        changeBranch(head, newCommit);
+        changeBranch(HEAD, newCommit);
     }
 
 
     public static void rm(String fileName) {
         StagingArea stagingArea = getStagingArea();
-        if (stagingArea.getFiles().containsKey(fileName)) {
+        if (stagingArea.contain(fileName)) {
             deleteFromStagingArea(fileName);
             return;
         }
-        Commit lastCommit = getCommitFromID(getHeadBranch().getPosition());
-        if (lastCommit.getFiles().containsKey(fileName)) {
+        Commit lastCommit = getLastCommit();
+        if (lastCommit.contain(fileName)) {
             stagingArea.getRemovalFiles().add(fileName);
             File file = new File(CWD, fileName);
             if (file.exists()) {
@@ -210,9 +215,9 @@ public class Repository {
     }
 
     public static void log() {
-        String currSHA1 = getHeadBranch().getPosition();
-        while (currSHA1 != null) {
-            currSHA1 = printCommit(currSHA1);
+        String currCommit = getHeadBranch().getCurrCommit();
+        while (currCommit != null) {
+            currCommit = printCommit(currCommit);
         }
     }
 
@@ -258,7 +263,7 @@ public class Repository {
     }
 
     private static void getFileFromCommit(Commit commit, String fileName) {
-        if (!commit.getFiles().containsKey(fileName)) {
+        if (!commit.contain(fileName)) {
             Utils.message("File does not exist in that commit.");
             System.exit(0);
         } else {
@@ -286,18 +291,18 @@ public class Repository {
     }
 
     public static void status() {
-        Branch headBranch = getHeadBranch();
+        Branch HEAD = getHeadBranch();
         List<String> branches = Utils.plainFilenamesIn(GITLET_DIR + slash + "branches");
         Utils.message("=== Branches ===");
         for (String b : branches) {
             Branch branch = getBranchFromName(b);
-            if (branch.getName() == headBranch.getName()) {
+            if (b.equals(HEAD.getName())) {
                 continue;
             }
-            if (branch.getPosition() == headBranch.getPosition()) {
+            if (branch.getCurrCommit().equals(HEAD.getCurrCommit())) {
                 Utils.message("*" + branch.getName());
             } else {
-                Utils.message(branch.getName());
+                Utils.message(b);
             }
         }
         Utils.message("");
@@ -328,22 +333,22 @@ public class Repository {
 
     public static void checkout(String... args) {
         if (args[1].equals("--")) {
-            Commit commit = getCommitFromID(getHeadBranch().getPosition());
+            Commit commit = getLastCommit();
             getFileFromCommit(commit, args[2]);
         } else if (args[2].equals("--")) {
             Commit commit = getCommitFromID(args[1]);
             getFileFromCommit(commit, args[3]);
         } else {
             Branch branch = getBranchFromName(args[1]);
-            Branch currentBranch = getHeadBranch();
-            if (branch.getPosition() == currentBranch.getPosition()) {
+            Branch HEAD = getHeadBranch();
+            if (branch.getCurrCommit().equals(HEAD.getCurrCommit())) {
                 Utils.message("No need to checkout the current branch.");
                 System.exit(0);
             }
             List<String> allFiles = Utils.plainFilenamesIn(CWD);
             for (String file : allFiles) {
-                if (!getCommitFromID(currentBranch.getPosition()).getFiles().containsKey(file)
-                        && !getStagingArea().getFiles().containsKey(file)) {
+                if (!getLastCommit().contain(file)
+                        && !getStagingArea().contain(file)) {
                     Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
@@ -351,13 +356,13 @@ public class Repository {
             for (String file : allFiles) {
                 Utils.restrictedDelete(file);
             }
-            Map<String, String> newFiles = getCommitFromID(branch.getPosition()).getFiles();
+            Map<String, String> newFiles = getCommitFromID(branch.getCurrCommit()).getFiles();
             for (String file : newFiles.keySet()) {
-                readFile(file, getCommitFromID(branch.getPosition()));
+                readFile(file, getCommitFromID(branch.getCurrCommit()));
             }
 
             cleanStagingArea(getStagingArea());
-            changeBranch(currentBranch, branch.getPosition());
+            changeBranch(HEAD, branch.getCurrCommit());
         }
     }
 }

@@ -22,7 +22,9 @@ public class Branch implements Serializable {
         return this.name;
     }
 
-    public String getPosition() {
+    public String getCurrCommit() {
         return this.pointToCommit;
     }
+
+
 }

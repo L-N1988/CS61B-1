@@ -11,24 +11,30 @@ import static gitlet.Utils.sha1;
 public class StagingArea implements Serializable {
 
     private static final long serialVersionUID = 4449685098267757691L;
-    private Map<String, String> map = new TreeMap<>();
+    private Map<String, String> files = new TreeMap<>();
     private Set<String> removal = new TreeSet<>();
 
     public Map<String, String> getFiles() {
-        return map;
+        return files;
     }
 
     public void clean() {
-        map = new TreeMap<>();
+        files = new TreeMap<>();
         removal = new TreeSet<>();
     }
 
     public boolean isEmpty() {
-        return map.isEmpty();
+        return files.isEmpty();
     }
 
     public Set<String> getRemovalFiles() {
         return removal;
     }
+
+    public boolean contain(String name) {
+        return this.files.containsKey(name);
+    }
+
+
 
 }

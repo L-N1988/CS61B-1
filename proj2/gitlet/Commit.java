@@ -52,6 +52,11 @@ public class Commit implements Serializable {
         return files;
     }
 
+
+    public boolean contain(String name) {
+        return this.files.containsKey(name);
+    }
+
     public String getParent() {
         return this.parent;
     }
