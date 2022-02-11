@@ -260,7 +260,8 @@ public class Repository {
                     String[] args = {"checkout", given.getCommitID(), "--", s};
                     checkout(args);
                     stagingArea.add(s, lastCommit);
-                } else if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s)
+                } else if (split && !equal(givenFiles, currFiles, s)
+                        && !equal(givenFiles, splitFiles, s)
                         && !equal(currFiles, splitFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;

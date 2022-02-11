@@ -1,7 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -141,12 +140,13 @@ public class RepoUtils {
         Commit commit = getCommitFromID(commitID);
         Utils.message("===");
         Utils.message("commit " + commitID);
-        if (commit.getSecondParent() != null) {
-            Utils.message("Merge: " + commit.getParent().substring(0, 8)
-                    + " " + commit.getSecondParent().substring(0, 8));
+        if (commit.hasSecondParent()) {
+            Utils.message("Merge: " + commit.getParent().substring(0, 7)
+                    + " " + commit.getSecondParent().substring(0, 7));
         }
         Date date = commit.getDate();
         SimpleDateFormat f = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
+        f.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
         Utils.message("Date: " + f.format(date));
         Utils.message(commit.getMessage());
         Utils.message("");
@@ -364,11 +364,12 @@ public class RepoUtils {
 
         }
         if (givenContent == null) {
-            Utils.writeContents(file, fileHead, currContent, separator, "", fileFoot);
+            Utils.writeContents(file, fileHead, currContent, "\n", separator, "", fileFoot);
         } else if (currContent == null) {
-            Utils.writeContents(file, fileHead, "", separator, givenContent, fileFoot);
+            Utils.writeContents(file, fileHead, "", separator, givenContent, "\n", fileFoot);
         } else {
-            Utils.writeContents(file, fileHead, currContent, separator, givenContent, fileFoot);
+            Utils.writeContents(
+                    file, fileHead, currContent, "\n", separator, givenContent, "\n", fileFoot);
         }
     }
 }
