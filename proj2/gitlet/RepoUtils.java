@@ -367,12 +367,77 @@ public class RepoUtils {
 
         }
         if (givenContent == null) {
-            Utils.writeContents(file, fileHead, currContent, "\n", separator, "", fileFoot);
+            Utils.writeContents(file, fileHead, currContent, separator, "", fileFoot);
         } else if (currContent == null) {
-            Utils.writeContents(file, fileHead, "", separator, givenContent, "\n", fileFoot);
+            Utils.writeContents(file, fileHead, "", separator, givenContent, fileFoot);
         } else {
-            Utils.writeContents(
-                    file, fileHead, currContent, "\n", separator, givenContent, "\n", fileFoot);
+            Utils.writeContents(file,
+                    fileHead, currContent, separator, givenContent, fileFoot);
         }
+    }
+
+    static boolean processFiles(
+            String splitPointID, Commit lastCommit, Branch given, StagingArea stagingArea) {
+        Map<String, String> splitFiles = getCommitFromID(splitPointID).getFiles();
+        Map<String, String> currFiles = lastCommit.getFiles();
+        Map<String, String> givenFiles = getCommitFromID(given.getCommitID()).getFiles();
+
+        boolean conflict = false;
+        for (String s : givenFiles.keySet()) {
+            boolean split = splitFiles.containsKey(s);
+            boolean cur = currFiles.containsKey(s);
+            if (cur) {
+                if (split && equal(splitFiles, currFiles, s) && !equal(splitFiles, givenFiles, s)) {
+                    String[] args = {"checkout", given.getCommitID(), "--", s};
+                    checkout(args);
+                    stagingArea.add(s, lastCommit);
+                } else if (split && !equal(givenFiles, currFiles, s)
+                        && !equal(givenFiles, splitFiles, s)
+                        && !equal(currFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                } else if (!split && !equal(givenFiles, currFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+            } else {
+                if (!split) {
+                    String[] args = {"checkout", given.getCommitID(), "--", s};
+                    checkout(args);
+                    stagingArea.add(s, lastCommit);
+                } else if (split && !equal(givenFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                } else if (split && equal(splitFiles, givenFiles, s)) {
+                    File f = new File(s);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                    stagingArea.delete(s);
+                }
+            }
+        }
+        for (String s : currFiles.keySet()) {
+            boolean split = splitFiles.containsKey(s);
+            boolean give = givenFiles.containsKey(s);
+            if (!give) {
+                if (split && equal(splitFiles, currFiles, s)) {
+                    File f = new File(s);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                    stagingArea.delete(s);
+                    stagingArea.addRemovedFiles(s);
+                } else if (split && !equal(currFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+            }
+        }
+        return conflict;
     }
 }
