@@ -237,12 +237,12 @@ public class Repository {
             Utils.message("Cannot merge a branch with itself.");
             System.exit(0);
         }
-//        if (!untrackedFile().isEmpty()) {
-//            String msg0 = "There is an untracked file in the way; ";
-//            String msg1 = "delete it, or add and commit it first.";
-//            Utils.message(msg0 + msg1);
-//            System.exit(0);
-//        }
+        if (!untrackedFile().isEmpty()) {
+            String msg0 = "There is an untracked file in the way; ";
+            String msg1 = "delete it, or add and commit it first.";
+            Utils.message(msg0 + msg1);
+            System.exit(0);
+        }
 
         String splitPointID = splitPoint(curr, given);
         Commit lastCommit = getCommitFromID(curr.getCommitID());
@@ -321,6 +321,10 @@ public class Repository {
 
         cleanStagingArea(stagingArea);
         changeBranch(curr, newCommit);
+    }
+
+    public static void addRemote(String remoteName, String directory) {
+
     }
 }
 

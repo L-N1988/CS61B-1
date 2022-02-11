@@ -71,6 +71,10 @@ public class Main {
                 validateNumArgs(args, 2, "Incorrect operands.");
                 Repository.merge(args[1]);
                 break;
+            case "add-remote":
+                validateNumArgs(args, 3, "Incorrect operands.");
+                Repository.addRemote(args[1], args[2]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

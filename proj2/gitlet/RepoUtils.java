@@ -140,10 +140,10 @@ public class RepoUtils {
     static String printCommit(String commitID) {
         Commit commit = getCommitFromID(commitID);
         Utils.message("===");
-        Utils.message("commit " + sha1(Utils.serialize(commit)));
+        Utils.message("commit " + commitID);
         if (commit.getSecondParent() != null) {
-            Utils.message("Merge: " + sha1(Utils.serialize(commit.getParent())).substring(0, 8)
-                    + " " + sha1(Utils.serialize(commit.getSecondParent())).substring(0, 8));
+            Utils.message("Merge: " + commit.getParent().substring(0, 8)
+                    + " " + commit.getSecondParent().substring(0, 8));
         }
         Date date = commit.getDate();
         SimpleDateFormat f = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
@@ -349,7 +349,7 @@ public class RepoUtils {
         File file = new File(conflictedFileName);
         String fileHead = "<<<<<<< HEAD\n";
         String separator = "=======\n";
-        String fileFoot = ">>>>>>>\n";
+        String fileFoot = ">>>>>>>";
         byte[] givenContent = null;
         byte[] currContent = null;
         if (currFiles.containsKey(conflictedFileName)) {
@@ -364,9 +364,9 @@ public class RepoUtils {
 
         }
         if (givenContent == null) {
-            Utils.writeContents(file, fileHead , currContent , separator , "" ,fileFoot);
+            Utils.writeContents(file, fileHead, currContent, separator, "", fileFoot);
         } else if (currContent == null) {
-            Utils.writeContents(file, fileHead , "" ,separator ,givenContent , fileFoot);
+            Utils.writeContents(file, fileHead, "", separator, givenContent, fileFoot);
         } else {
             Utils.writeContents(file, fileHead, currContent, separator, givenContent, fileFoot);
         }
