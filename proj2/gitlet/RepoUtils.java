@@ -126,7 +126,7 @@ public class RepoUtils {
         file.delete();
     }
 
-    static void writeBlob(byte[] contents, String fileID) {
+    static void writeBlob(String contents, String fileID) {
         File file = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
         Utils.writeContents(file, contents);
     }
@@ -134,7 +134,7 @@ public class RepoUtils {
     static void readBlob(String fileName, String fileID) {
         File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
         File file = new File(fileName);
-        Utils.writeContents(file, Utils.readContents(blob));
+        Utils.writeContents(file, Utils.readContentsAsString(blob));
     }
 
     static String printCommit(String commitID) {
@@ -234,7 +234,7 @@ public class RepoUtils {
             }
             File file = new File(fileName);
             if (file.exists()) {
-                byte[] contents = Utils.readContents(file);
+                String contents = Utils.readContentsAsString(file);
                 String fileID = sha1(contents);
                 if (lastCommit.contain(fileName)
                         && !lastCommit.getFileID(fileName).equals(fileID)) {
@@ -353,17 +353,17 @@ public class RepoUtils {
         String fileHead = "<<<<<<< HEAD\n";
         String separator = "=======\n";
         String fileFoot = ">>>>>>>";
-        byte[] givenContent = null;
-        byte[] currContent = null;
+        String givenContent = null;
+        String currContent = null;
         if (currFiles.containsKey(conflictedFileName)) {
             String fileID = currFiles.get(conflictedFileName);
             File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
-            currContent = Utils.readContents(blob);
+            currContent = Utils.readContentsAsString(blob);
         }
         if (givenFiles.containsKey(conflictedFileName)) {
             String fileID = givenFiles.get(conflictedFileName);
             File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
-            givenContent = Utils.readContents(blob);
+            givenContent = Utils.readContentsAsString(blob);
 
         }
         if (givenContent == null) {

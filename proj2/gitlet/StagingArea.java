@@ -54,7 +54,7 @@ public class StagingArea implements Serializable {
                 removal.remove(fileName);
             }
 
-            byte[] contents = Utils.readContents(file);
+            String contents = Utils.readContentsAsString(file);
             String fileID = sha1(contents);
             if (fileID.equals(lastCommit.getFileID(fileName))) {
                 delete(fileName);
