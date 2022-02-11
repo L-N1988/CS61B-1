@@ -303,7 +303,7 @@ public class RepoUtils {
     }
 
     static boolean equal(Map<String, String> map1, Map<String, String> map2,
-                               String name) {
+                         String name) {
         return map1.get(name).equals(map2.get(name));
     }
 
@@ -331,7 +331,7 @@ public class RepoUtils {
         } else if (currContent == null) {
             Utils.writeContents(file, fileHead + "" + separator + givenContent + fileFoot);
         } else {
-            Utils.writeContents(file, fileHead + currContent + separator + givenContent + fileFoot);
+            Utils.writeContents(file, fileHead, currContent, separator, givenContent, fileFoot);
         }
     }
 }

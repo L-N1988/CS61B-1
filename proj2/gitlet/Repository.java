@@ -245,7 +245,7 @@ public class Repository {
         }
 
         String splitPointID = splitPoint(curr, given);
-        Commit lastCommit = getCommitFromID(given.getCommitID());
+        Commit lastCommit = getCommitFromID(curr.getCommitID());
 
         Map<String, String> splitFiles = getCommitFromID(splitPointID).getFiles();
         Map<String, String> currFiles = lastCommit.getFiles();
@@ -262,7 +262,8 @@ public class Repository {
                     stagingArea.add(s, lastCommit);
                     continue;
                 }
-                if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s) && !equal(currFiles, splitFiles, s)) {
+                if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s)
+                        && !equal(currFiles, splitFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);
@@ -303,7 +304,6 @@ public class Repository {
                 }
             }
         }
-
 
         String message = "Merged " + given.getName() + " into " + curr.getName() + ".";
         if (stagingArea.isEmpty()) {
