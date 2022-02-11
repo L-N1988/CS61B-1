@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static gitlet.Repository.checkout;
 import static gitlet.Utils.*;
 
 public class RepoUtils {
@@ -329,6 +330,8 @@ public class RepoUtils {
         String originGiven = given.getCommitID();
         String splitPoint = getSplitPoint(originCurr, originGiven);
         if (splitPoint.equals(originCurr)) {
+            String[] args = {"checkout", given.getName()};
+            checkout(args);
             Utils.message("Current branch fast-forwarded.");
             System.exit(0);
         }
