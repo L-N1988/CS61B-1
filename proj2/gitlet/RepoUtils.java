@@ -352,7 +352,7 @@ public class RepoUtils {
         File file = new File(conflictedFileName);
         String fileHead = "<<<<<<< HEAD\n";
         String separator = "=======\n";
-        String fileFoot = ">>>>>>>";
+        String fileFoot = ">>>>>>>\n";
         String givenContent = null;
         String currContent = null;
         if (currFiles.containsKey(conflictedFileName)) {
