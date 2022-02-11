@@ -48,7 +48,7 @@ public class Repository {
         Branch curr = getCurrBranch();
         String commitID = curr.getCommitID();
         Commit lastCommit = getCommitFromID(commitID);
-        String newCommit = makeCommit(message, getFileSet(stagingArea, lastCommit), commitID);
+        String newCommit = makeCommit(message, getCommitFileSet(stagingArea, lastCommit), commitID);
 
         cleanStagingArea(stagingArea);
         changeBranch(curr, newCommit);
@@ -220,6 +220,7 @@ public class Repository {
 
 
     public static void merge(String branchName) {
+        validDirectory();
         StagingArea stagingArea = getStagingArea();
         if (!stagingArea.isEmpty()) {
             Utils.message("You have uncommitted changes.");
@@ -244,9 +245,80 @@ public class Repository {
         }
 
         String splitPointID = splitPoint(curr, given);
+        Commit lastCommit = getCommitFromID(given.getCommitID());
 
-        // no changes in it, just normal commit error message
+        Map<String, String> splitFiles = getCommitFromID(splitPointID).getFiles();
+        Map<String, String> currFiles = lastCommit.getFiles();
+        Map<String, String> givenFiles = getCommitFromID(given.getCommitID()).getFiles();
 
+        boolean conflict = false;
+        for (String s : givenFiles.keySet()) {
+            boolean split = splitFiles.containsKey(s);
+            boolean cur = currFiles.containsKey(s);
+            if (cur) {
+                if (split && equal(splitFiles, currFiles, s) && !equal(splitFiles, givenFiles, s)) {
+                    String[] args = {"checkout", given.getCommitID(), "--", s};
+                    checkout(args);
+                    stagingArea.add(s, lastCommit);
+                    continue;
+                }
+                if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s) && !equal(currFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+                if (!split && !equal(givenFiles, currFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+            } else {
+                if (!split) {
+                    String[] args = {"checkout", given.getCommitID(), "--", s};
+                    checkout(args);
+                    stagingArea.add(s, lastCommit);
+                }
+                if (split && !equal(givenFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+            }
+        }
+        for (String s : currFiles.keySet()) {
+            boolean split = splitFiles.containsKey(s);
+            boolean give = currFiles.containsKey(s);
+            if (!give) {
+                if (split && equal(splitFiles, currFiles, s)) {
+                    File f = new File(s);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                    stagingArea.delete(s);
+                }
+                if (split && !equal(currFiles, splitFiles, s)) {
+                    handleConflict(currFiles, givenFiles, s);
+                    conflict = true;
+                    stagingArea.add(s, lastCommit);
+                }
+            }
+        }
+
+
+        String message = "Merged " + given.getName() + " into " + curr.getName() + ".";
+        if (stagingArea.isEmpty()) {
+            Utils.message("No changes added to the commit.");
+            System.exit(0);
+        }
+        if (conflict) {
+            Utils.message("Encountered a merge conflict.");
+        }
+
+        String newCommit = makeMergeCommit(message,
+                getCommitFileSet(stagingArea, lastCommit), curr.getCommitID(), given.getCommitID());
+
+        cleanStagingArea(stagingArea);
+        changeBranch(curr, newCommit);
     }
 }
 

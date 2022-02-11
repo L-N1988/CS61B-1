@@ -34,6 +34,14 @@ public class Commit implements Serializable {
         this.parent = parent;
     }
 
+    public Commit(String msg, Map<String, String> files, String parent, String secondParent) {
+        this.files = files;
+        this.timestamp = new Date();
+        this.message = msg;
+        this.parent = parent;
+        this.secondParent = secondParent;
+    }
+
     public String getFileID(String fileName) {
         if (files.containsKey(fileName)) {
             return files.get(fileName);

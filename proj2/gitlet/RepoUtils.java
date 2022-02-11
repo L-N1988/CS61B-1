@@ -102,7 +102,17 @@ public class RepoUtils {
     }
 
     static String makeCommit(String msg, Map<String, String> allFiles, String parent) {
-        Commit commit = new Commit(msg, new Date(), allFiles, parent);
+        Commit commit = new Commit(msg, allFiles, parent);
+        byte[] serialized = Utils.serialize(commit);
+        String commitID = sha1(serialized);
+        File f = new File(GITLET_DIR + SLASH + "commits" + SLASH + commitID);
+        Utils.writeContents(f, serialized);
+        return commitID;
+    }
+
+    static String makeMergeCommit(
+            String msg, Map<String, String> allFiles, String parent, String secondParent) {
+        Commit commit = new Commit(msg, allFiles, parent, secondParent);
         byte[] serialized = Utils.serialize(commit);
         String commitID = sha1(serialized);
         File f = new File(GITLET_DIR + SLASH + "commits" + SLASH + commitID);
@@ -170,7 +180,7 @@ public class RepoUtils {
         return Utils.readObject(branchName, Branch.class);
     }
 
-    static Map<String, String> getFileSet(StagingArea stagingArea, Commit commit) {
+    static Map<String, String> getCommitFileSet(StagingArea stagingArea, Commit commit) {
         Map<String, String> stagedFiles = stagingArea.getFiles();
         Map<String, String> originCommitFiles = commit.getFiles();
         for (String name : stagingArea.getRemovalFiles()) {
@@ -290,5 +300,38 @@ public class RepoUtils {
             System.exit(0);
         }
         return cid;
+    }
+
+    static boolean equal(Map<String, String> map1, Map<String, String> map2,
+                               String name) {
+        return map1.get(name).equals(map2.get(name));
+    }
+
+    static void handleConflict(Map<String, String> currFiles, Map<String, String> givenFiles,
+                               String conflictedFileName) {
+        File file = new File(conflictedFileName);
+        String fileHead = "<<<<<<< HEAD\n";
+        String separator = "=======\n";
+        String fileFoot = ">>>>>>>\n";
+        byte[] givenContent = null;
+        byte[] currContent = null;
+        if (currFiles.containsKey(conflictedFileName)) {
+            String fileID = currFiles.get(conflictedFileName);
+            File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
+            givenContent = Utils.readContents(blob);
+        }
+        if (givenFiles.containsKey(conflictedFileName)) {
+            String fileID = givenFiles.get(conflictedFileName);
+            File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
+            currContent = Utils.readContents(blob);
+
+        }
+        if (givenContent == null) {
+            Utils.writeContents(file, fileHead + currContent + separator + "" + fileFoot);
+        } else if (currContent == null) {
+            Utils.writeContents(file, fileHead + "" + separator + givenContent + fileFoot);
+        } else {
+            Utils.writeContents(file, fileHead + currContent + separator + givenContent + fileFoot);
+        }
     }
 }
