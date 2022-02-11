@@ -237,12 +237,12 @@ public class Repository {
             Utils.message("Cannot merge a branch with itself.");
             System.exit(0);
         }
-        if (!untrackedFile().isEmpty()) {
-            String msg0 = "There is an untracked file in the way; ";
-            String msg1 = "delete it, or add and commit it first.";
-            Utils.message(msg0 + msg1);
-            System.exit(0);
-        }
+//        if (!untrackedFile().isEmpty()) {
+//            String msg0 = "There is an untracked file in the way; ";
+//            String msg1 = "delete it, or add and commit it first.";
+//            Utils.message(msg0 + msg1);
+//            System.exit(0);
+//        }
 
         String splitPointID = splitPoint(curr, given);
         Commit lastCommit = getCommitFromID(curr.getCommitID());
@@ -260,15 +260,12 @@ public class Repository {
                     String[] args = {"checkout", given.getCommitID(), "--", s};
                     checkout(args);
                     stagingArea.add(s, lastCommit);
-                    continue;
-                }
-                if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s)
+                } else if (split && !equal(givenFiles, currFiles, s) && !equal(givenFiles, splitFiles, s)
                         && !equal(currFiles, splitFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);
-                }
-                if (!split && !equal(givenFiles, currFiles, s)) {
+                } else if (!split && !equal(givenFiles, currFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);
@@ -278,17 +275,22 @@ public class Repository {
                     String[] args = {"checkout", given.getCommitID(), "--", s};
                     checkout(args);
                     stagingArea.add(s, lastCommit);
-                }
-                if (split && !equal(givenFiles, splitFiles, s)) {
+                } else if (split && !equal(givenFiles, splitFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);
+                } else if (split && equal(splitFiles, givenFiles, s)) {
+                    File f = new File(s);
+                    if (f.exists()) {
+                        f.delete();
+                    }
+                    stagingArea.delete(s);
                 }
             }
         }
         for (String s : currFiles.keySet()) {
             boolean split = splitFiles.containsKey(s);
-            boolean give = currFiles.containsKey(s);
+            boolean give = givenFiles.containsKey(s);
             if (!give) {
                 if (split && equal(splitFiles, currFiles, s)) {
                     File f = new File(s);
@@ -296,8 +298,8 @@ public class Repository {
                         f.delete();
                     }
                     stagingArea.delete(s);
-                }
-                if (split && !equal(currFiles, splitFiles, s)) {
+                    stagingArea.addRemovedFiles(s);
+                } else if (split && !equal(currFiles, splitFiles, s)) {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);

@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -274,32 +275,68 @@ public class RepoUtils {
         }
     }
 
-    static String splitPoint(Branch curr, Branch given) {
-        String cid = curr.getCommitID();
-        String gid = given.getCommitID();
-        String originCurr = cid;
-        String originGiven = gid;
-        Commit c = getCommitFromID(cid);
-        Commit g = getCommitFromID(gid);
-        while (!cid.equals(gid)) {
-            int cmp = c.getDate().compareTo(g.getDate());
-            if (cmp > 0) {
-                cid = c.getParent();
-                c = getCommitFromID(cid);
-            } else if (cmp <= 0 && !cid.equals(gid)) {
-                gid = g.getParent();
-                g = getCommitFromID(gid);
+    static String latestCommit(String c1, String c2) {
+        if (c1 == null) {
+            return c2;
+        } else if (c2 == null) {
+            return c1;
+        }
+        Commit commit1 = getCommitFromID(c1);
+        Commit commit2 = getCommitFromID(c2);
+        int cmp = commit1.getDate().compareTo(commit2.getDate());
+        if (cmp > 0) {
+            return c1;
+        } else {
+            return c2;
+        }
+    }
+
+    static String getSplitPoint(String commitID1, String commitID2) {
+        if (commitID1.equals(commitID2)) {
+            return commitID2;
+        }
+        Commit c1 = getCommitFromID(commitID1);
+        Commit c2 = getCommitFromID(commitID2);
+
+        if (c1.hasSecondParent()) {
+            String res1 = getSplitPoint(c1.getParent(), commitID2);
+            String res2 = getSplitPoint(c1.getSecondParent(), commitID2);
+            return latestCommit(res1, res2);
+        } else if (c2.hasSecondParent()) {
+            String res1 = getSplitPoint(commitID1, c2.getParent());
+            String res2 = getSplitPoint(commitID1, c2.getSecondParent());
+            return latestCommit(res1, res2);
+        } else {
+            String latest = latestCommit(commitID1, commitID2);
+            if (latest.equals(commitID1)) {
+                if (c1.hasParent()) {
+                    return getSplitPoint(c1.getParent(), commitID2);
+                } else {
+                    return null;
+                }
+            } else {
+                if (c2.hasParent()) {
+                    return getSplitPoint(commitID1, c2.getParent());
+                } else {
+                    return null;
+                }
             }
         }
-        if (cid.equals(originCurr)) {
+    }
+
+    static String splitPoint(Branch curr, Branch given) {
+        String originCurr = curr.getCommitID();
+        String originGiven = given.getCommitID();
+        String splitPoint = getSplitPoint(originCurr, originGiven);
+        if (splitPoint.equals(originCurr)) {
             Utils.message("Current branch fast-forwarded.");
             System.exit(0);
         }
-        if (cid.equals(originGiven)) {
+        if (splitPoint.equals(originGiven)) {
             Utils.message("Given branch is an ancestor of the current branch.");
             System.exit(0);
         }
-        return cid;
+        return splitPoint;
     }
 
     static boolean equal(Map<String, String> map1, Map<String, String> map2,
@@ -318,18 +355,18 @@ public class RepoUtils {
         if (currFiles.containsKey(conflictedFileName)) {
             String fileID = currFiles.get(conflictedFileName);
             File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
-            givenContent = Utils.readContents(blob);
+            currContent = Utils.readContents(blob);
         }
         if (givenFiles.containsKey(conflictedFileName)) {
             String fileID = givenFiles.get(conflictedFileName);
             File blob = new File(GITLET_DIR + SLASH + "blobs" + SLASH + fileID);
-            currContent = Utils.readContents(blob);
+            givenContent = Utils.readContents(blob);
 
         }
         if (givenContent == null) {
-            Utils.writeContents(file, fileHead + currContent + separator + "" + fileFoot);
+            Utils.writeContents(file, fileHead , currContent , separator , "" ,fileFoot);
         } else if (currContent == null) {
-            Utils.writeContents(file, fileHead + "" + separator + givenContent + fileFoot);
+            Utils.writeContents(file, fileHead , "" ,separator ,givenContent , fileFoot);
         } else {
             Utils.writeContents(file, fileHead, currContent, separator, givenContent, fileFoot);
         }

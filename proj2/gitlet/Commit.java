@@ -62,7 +62,11 @@ public class Commit implements Serializable {
     }
 
     public String getParent() {
-        return this.parent;
+        if (this.parent == null) {
+            return this.secondParent;
+        } else {
+            return this.parent;
+        }
     }
 
     public Date getDate() {
@@ -76,7 +80,12 @@ public class Commit implements Serializable {
     public String getSecondParent() {
         return this.secondParent;
     }
-
+    public boolean hasSecondParent() {
+        return this.parent != null && this.secondParent != null;
+    }
+    public boolean hasParent() {
+        return this.parent != null || this.secondParent != null;
+    }
     public void restoreFile(String fileName) {
         if (!contain(fileName)) {
             Utils.message("File does not exist in that commit.");
