@@ -172,7 +172,11 @@ public class Repository {
 
     public static void branch(String name) {
         validDirectory();
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        String fileName = name;
+        if (name.contains("/")) {
+            fileName = sha1(name);
+        }
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         if (branchName.exists()) {
             Utils.message("A branch with that name already exists.");
             System.exit(0);
@@ -183,7 +187,11 @@ public class Repository {
 
     public static void rmBranch(String name) {
         validDirectory();
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        String fileName = name;
+        if (name.contains("/")) {
+            fileName = sha1(name);
+        }
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         if (!branchName.exists()) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
@@ -227,7 +235,11 @@ public class Repository {
             Utils.message("You have uncommitted changes.");
             System.exit(0);
         }
-        File file = new File(GITLET_DIR + SLASH + "branches" + SLASH + branchName);
+        String fileName = branchName;
+        if (branchName.contains("/")) {
+            fileName = sha1(branchName);
+        }
+        File file = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         if (!file.exists()) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
@@ -343,7 +355,8 @@ public class Repository {
             } else {
                 String id = remoteBranch.getCommitID();
                 copyCommitsAndBlobs(remoteGitlet, GITLET_DIR, null, id);
-                File b = new File(GITLET_DIR + SLASH + "branches" + SLASH + branchName);
+                String fileName = sha1(branchName);
+                File b = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
                 if (!b.exists()) {
                     createBranch(branchName, id);
                 } else {
@@ -351,7 +364,6 @@ public class Repository {
                 }
             }
         }
-
     }
 
     public static void pull(String remoteName, String remoteBranchName) {

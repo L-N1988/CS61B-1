@@ -54,16 +54,23 @@ public class RepoUtils {
     }
 
     static Branch createBranch(String name, String pointTo) {
+        String fileName = name;
+        if (name.contains("/")) {
+            fileName = sha1(name);
+        }
         Branch branch = new Branch(name, pointTo);
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         Utils.writeObject(f, branch);
         return branch;
     }
 
-
     static Branch createRemoteBranch(File remoteGitlet, String name, String pointTo) {
         Branch branch = new Branch(name, pointTo);
-        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + name);
+        String fileName = name;
+        if (fileName.contains("/")) {
+            fileName = sha1(fileName);
+        }
+        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
         Utils.writeObject(f, branch);
         return branch;
     }
@@ -88,7 +95,11 @@ public class RepoUtils {
     }
 
     static Branch getRemoteBranch(File remoteGitlet, String remoteBranchName) {
-        File branchName = new File(remoteGitlet + SLASH + "branches" + SLASH + remoteBranchName);
+        String fileName = remoteBranchName;
+        if (fileName.contains("/")) {
+            fileName = sha1(fileName);
+        }
+        File branchName = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
         if (!branchName.exists()) {
             return null;
         }
@@ -97,21 +108,33 @@ public class RepoUtils {
 
     static Branch changeBranch(Branch branch, String commit) {
         branch.changeTo(commit);
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + branch.getName());
+        String fileName = branch.getName();
+        if (fileName.contains("/")) {
+            fileName = sha1(fileName);
+        }
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         Utils.writeObject(f, branch);
         return branch;
     }
 
     static Branch changeRemoteBranch(File remoteGitlet, Branch branch, String commit) {
         branch.changeTo(commit);
-        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + branch.getName());
+        String fileName = branch.getName();
+        if (fileName.contains("/")) {
+            fileName = sha1(fileName);
+        }
+        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
         Utils.writeObject(f, branch);
         return branch;
     }
 
 
     static void removeBranch(String name) {
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        String fileName = name;
+        if (name.contains("/")) {
+            fileName = sha1(name);
+        }
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         f.delete();
     }
 
@@ -201,7 +224,11 @@ public class RepoUtils {
     }
 
     static Branch getBranchFromName(String name) {
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        String fileName = name;
+        if (name.contains("/")) {
+            fileName = sha1(name);
+        }
+        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
         if (!branchName.exists()) {
             Utils.message("No such branch exists.");
             System.exit(0);
