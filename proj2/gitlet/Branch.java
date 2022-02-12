@@ -2,6 +2,11 @@ package gitlet;
 
 import java.io.Serializable;
 
+/**
+ * Represents a gitlet branch object.
+ *
+ * @author Christina0031
+ */
 public class Branch implements Serializable {
 
     private static final long serialVersionUID = 2229685098267757691L;
@@ -20,7 +25,7 @@ public class Branch implements Serializable {
         this.pointTo = pointTo;
     }
 
-    public void changeTo(String dest) {
+    public void changeCommitTo(String dest) {
         this.commitID = dest;
     }
 

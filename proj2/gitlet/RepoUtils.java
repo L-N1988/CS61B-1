@@ -10,6 +10,11 @@ import static gitlet.Repository.checkout;
 import static gitlet.Utils.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+/**
+ * Providing several useful utility functions.
+ *
+ * @author Christina0031
+ */
 public class RepoUtils {
     /**
      * The current working directory.
@@ -54,23 +59,23 @@ public class RepoUtils {
     }
 
     static Branch createBranch(String name, String pointTo) {
-        String fileName = name;
-        if (name.contains("/")) {
-            fileName = sha1(name);
-        }
         Branch branch = new Branch(name, pointTo);
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
+        File f = getBranchFile(GITLET_DIR, name);
         Utils.writeObject(f, branch);
         return branch;
     }
 
-    static Branch createRemoteBranch(File remoteGitlet, String name, String pointTo) {
-        Branch branch = new Branch(name, pointTo);
+    static File getBranchFile(File path, String name) {
         String fileName = name;
-        if (fileName.contains("/")) {
-            fileName = sha1(fileName);
+        if (name.contains("/")) {
+            fileName = sha1(name);
         }
-        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
+        return new File(path + SLASH + "branches" + SLASH + fileName);
+    }
+
+    static Branch createRemoteBranch(File remoteGitlet, String name, String pointTo) {
+        File f = getBranchFile(remoteGitlet, name);
+        Branch branch = new Branch(name, pointTo);
         Utils.writeObject(f, branch);
         return branch;
     }
@@ -83,64 +88,47 @@ public class RepoUtils {
     }
 
     static void changeHEAD(String dest) {
-        Branch head = getBranchFromName("HEAD");
+        Branch head = getBranch("HEAD");
         head.changePointTo(dest);
         File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + "HEAD");
         Utils.writeObject(f, head);
     }
 
     static Branch getCurrBranch() {
-        String headBranch = getBranchFromName("HEAD").pointTo();
-        return getBranchFromName(headBranch);
+        String headBranch = getBranch("HEAD").pointTo();
+        return getBranch(headBranch);
     }
 
     static Branch getRemoteBranch(File remoteGitlet, String remoteBranchName) {
-        String fileName = remoteBranchName;
-        if (fileName.contains("/")) {
-            fileName = sha1(fileName);
-        }
-        File branchName = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
-        if (!branchName.exists()) {
+        File f = getBranchFile(remoteGitlet, remoteBranchName);
+        if (!f.exists()) {
             return null;
         }
-        return Utils.readObject(branchName, Branch.class);
+        return Utils.readObject(f, Branch.class);
     }
 
     static Branch changeBranch(Branch branch, String commit) {
-        branch.changeTo(commit);
-        String fileName = branch.getName();
-        if (fileName.contains("/")) {
-            fileName = sha1(fileName);
-        }
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
+        branch.changeCommitTo(commit);
+        File f = getBranchFile(GITLET_DIR, branch.getName());
         Utils.writeObject(f, branch);
         return branch;
     }
 
     static Branch changeRemoteBranch(File remoteGitlet, Branch branch, String commit) {
-        branch.changeTo(commit);
-        String fileName = branch.getName();
-        if (fileName.contains("/")) {
-            fileName = sha1(fileName);
-        }
-        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + fileName);
+        branch.changeCommitTo(commit);
+        File f = getBranchFile(remoteGitlet, branch.getName());
         Utils.writeObject(f, branch);
         return branch;
     }
 
-
     static void removeBranch(String name) {
-        String fileName = name;
-        if (name.contains("/")) {
-            fileName = sha1(name);
-        }
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
+        File f = getBranchFile(GITLET_DIR, name);
         f.delete();
     }
 
     static Commit getLastCommit() {
         String commitID = getCurrBranch().getCommitID();
-        return getCommitFromID(commitID);
+        return getCommit(commitID);
     }
 
     static String initCommit() {
@@ -188,7 +176,7 @@ public class RepoUtils {
     }
 
     static String printCommit(String commitID) {
-        Commit commit = getCommitFromID(commitID);
+        Commit commit = getCommit(commitID);
         Utils.message("===");
         Utils.message("commit " + commitID);
         if (commit.hasSecondParent()) {
@@ -205,11 +193,11 @@ public class RepoUtils {
         return commit.getParent();
     }
 
-    static Commit getCommitFromID(String id) {
+    static Commit getCommit(String id) {
         if (id.length() < 40) {
             List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
             for (String s : commits) {
-                if (s.startsWith(id)) { // ignore duplicate
+                if (s.startsWith(id)) { // when use abbr. ignore duplicate
                     id = s;
                     break;
                 }
@@ -223,20 +211,16 @@ public class RepoUtils {
         return Utils.readObject(commitID, Commit.class);
     }
 
-    static Branch getBranchFromName(String name) {
-        String fileName = name;
-        if (name.contains("/")) {
-            fileName = sha1(name);
-        }
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
-        if (!branchName.exists()) {
+    static Branch getBranch(String name) {
+        File f = getBranchFile(GITLET_DIR, name);
+        if (!f.exists()) {
             Utils.message("No such branch exists.");
             System.exit(0);
         }
-        return Utils.readObject(branchName, Branch.class);
+        return Utils.readObject(f, Branch.class);
     }
 
-    static Map<String, String> getCommitFileSet(StagingArea stagingArea, Commit commit) {
+    static Map<String, String> getFileSetToBeCommitted(StagingArea stagingArea, Commit commit) {
         Map<String, String> stagedFiles = stagingArea.getFiles();
         Map<String, String> originCommitFiles = commit.getFiles();
         for (String name : stagingArea.getRemovalFiles()) {
@@ -270,7 +254,7 @@ public class RepoUtils {
         Commit lastCommit = getLastCommit();
         StagingArea stagingArea = getStagingArea();
         for (String file : allFiles) {
-            if (!lastCommit.contain(file) && !stagingArea.track(file)) {
+            if (!lastCommit.contain(file) && !stagingArea.contain(file)) {
                 untracked.add(file);
             }
         }
@@ -283,7 +267,7 @@ public class RepoUtils {
         StagingArea stagingArea = getStagingArea();
         Set<String> set = lastCommit.getFilesSet();
         for (String fileName : set) {
-            if (stagingArea.track(fileName)) {
+            if (stagingArea.contain(fileName)) {
                 continue;
             }
             File file = new File(fileName);
@@ -316,7 +300,7 @@ public class RepoUtils {
         }
     }
 
-    static void setCommit(Commit commit) {
+    static void restoreCommit(Commit commit) {
         if (!untrackedFile().isEmpty()) {
             String msg0 = "There is an untracked file in the way; ";
             String msg1 = "delete it, or add and commit it first.";
@@ -336,8 +320,8 @@ public class RepoUtils {
         } else if (c2 == null) {
             return c1;
         }
-        Commit commit1 = getCommitFromID(c1);
-        Commit commit2 = getCommitFromID(c2);
+        Commit commit1 = getCommit(c1);
+        Commit commit2 = getCommit(c2);
         int cmp = commit1.getDate().compareTo(commit2.getDate());
         if (cmp > 0) {
             return c1;
@@ -350,8 +334,8 @@ public class RepoUtils {
         if (commitID1.equals(commitID2)) {
             return commitID2;
         }
-        Commit c1 = getCommitFromID(commitID1);
-        Commit c2 = getCommitFromID(commitID2);
+        Commit c1 = getCommit(commitID1);
+        Commit c2 = getCommit(commitID2);
 
         if (c1.hasSecondParent()) {
             String res1 = getSplitPoint(c1.getParent(), commitID2);
@@ -366,17 +350,14 @@ public class RepoUtils {
             if (latest.equals(commitID1)) {
                 if (c1.hasParent()) {
                     return getSplitPoint(c1.getParent(), commitID2);
-                } else {
-                    return null;
                 }
             } else {
                 if (c2.hasParent()) {
                     return getSplitPoint(commitID1, c2.getParent());
-                } else {
-                    return null;
                 }
             }
         }
+        return null;
     }
 
     static String splitPoint(Branch curr, Branch given) {
@@ -394,11 +375,6 @@ public class RepoUtils {
             System.exit(0);
         }
         return splitPoint;
-    }
-
-    static boolean equal(Map<String, String> map1, Map<String, String> map2,
-                         String name) {
-        return map1.get(name).equals(map2.get(name));
     }
 
     static void handleConflict(Map<String, String> currFiles, Map<String, String> givenFiles,
@@ -425,16 +401,20 @@ public class RepoUtils {
         } else if (currContent == null) {
             Utils.writeContents(file, fileHead, "", separator, givenContent, fileFoot);
         } else {
-            Utils.writeContents(file,
-                    fileHead, currContent, separator, givenContent, fileFoot);
+            Utils.writeContents(file, fileHead, currContent, separator, givenContent, fileFoot);
         }
+    }
+
+    static boolean equal(Map<String, String> map1, Map<String, String> map2,
+                         String name) {
+        return map1.get(name).equals(map2.get(name));
     }
 
     static boolean processFiles(
             String splitPointID, Commit lastCommit, Branch given, StagingArea stagingArea) {
-        Map<String, String> splitFiles = getCommitFromID(splitPointID).getFiles();
+        Map<String, String> splitFiles = getCommit(splitPointID).getFiles();
         Map<String, String> currFiles = lastCommit.getFiles();
-        Map<String, String> givenFiles = getCommitFromID(given.getCommitID()).getFiles();
+        Map<String, String> givenFiles = getCommit(given.getCommitID()).getFiles();
 
         boolean conflict = false;
         for (String s : givenFiles.keySet()) {
@@ -491,7 +471,7 @@ public class RepoUtils {
         if (commitID.equals(objectID)) {
             return true;
         }
-        Commit c = getCommitFromID(commitID);
+        Commit c = getCommit(commitID);
         if (c.hasSecondParent()) {
             return isHistory(c.getParent(), objectID) || isHistory(c.getSecondParent(), objectID);
         } else if (c.hasParent()) {
@@ -499,6 +479,21 @@ public class RepoUtils {
         } else {
             return false;
         }
+    }
+
+    static File getGitletDir(String remoteName) {
+        File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
+        if (!f.exists()) {
+            Utils.message("A remote with that name does not exist.");
+            System.exit(0);
+        }
+        Remote remote = readObject(f, Remote.class);
+        File remoteGitlet = new File(remote.getDirectory());
+        if (!remoteGitlet.exists()) {
+            Utils.message("Remote directory not found.");
+            System.exit(0);
+        }
+        return remoteGitlet;
     }
 
     static void copyCommitsAndBlobs(File from, File to, String endCommit, String startCommit) {
@@ -514,7 +509,7 @@ public class RepoUtils {
             if (!t.exists()) {
                 try {
                     Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
-                    Commit commit = getCommitFromID(commitID);
+                    Commit commit = getCommit(commitID);
                     for (String s : commit.getFiles().values()) {
                         f = new File(from + SLASH + "blobs" + SLASH + s);
                         t = new File(to + SLASH + "blobs" + SLASH + s);
@@ -527,7 +522,7 @@ public class RepoUtils {
                     System.exit(0);
                 }
             }
-            Commit commit = getCommitFromID(commitID);
+            Commit commit = getCommit(commitID);
             if (commit.hasSecondParent()) {
                 commits.add(commit.getParent());
                 commits.add(commit.getSecondParent());

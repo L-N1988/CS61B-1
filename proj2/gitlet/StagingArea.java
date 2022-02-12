@@ -12,7 +12,7 @@ public class StagingArea implements Serializable {
     private static final long serialVersionUID = 4449685098267757691L;
     private Map<String, String> files = new TreeMap<>();
     private Set<String> removal = new TreeSet<>();
-    private Set<String> canDeleteBlob = new TreeSet<>();
+    private Set<String> blobCanBeDeleted = new TreeSet<>();
 
     public Map<String, String> getFiles() {
         return files;
@@ -21,7 +21,7 @@ public class StagingArea implements Serializable {
     public void clean() {
         files = new TreeMap<>();
         removal = new TreeSet<>();
-        canDeleteBlob = new TreeSet<>();
+        blobCanBeDeleted = new TreeSet<>();
     }
 
     public boolean isEmpty() {
@@ -32,15 +32,15 @@ public class StagingArea implements Serializable {
         return removal;
     }
 
-    public Set<String> getKeys() {
+    public Set<String> getFilenameSet() {
         return files.keySet();
     }
 
-    public boolean contain(String name) {
+    public boolean willBeAddedOrModified(String name) {
         return this.files.containsKey(name);
     }
 
-    public boolean track(String name) {
+    public boolean contain(String name) {
         return this.files.containsKey(name) || this.removal.contains(name);
     }
 
@@ -62,7 +62,7 @@ public class StagingArea implements Serializable {
                 files.put(fileName, fileID);
                 List<String> blobs = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "blobs");
                 if (!blobs.contains(fileID)) {
-                    canDeleteBlob.add(fileID);
+                    blobCanBeDeleted.add(fileID);
                 }
                 writeBlob(contents, fileID);
             }
@@ -72,7 +72,7 @@ public class StagingArea implements Serializable {
     public void delete(String fileName) {
         if (files.containsKey(fileName)) {
             String fileID = files.get(fileName);
-            if (canDeleteBlob.contains(fileID)) {
+            if (blobCanBeDeleted.contains(fileID)) {
                 deleteBlob(fileID);
             }
             files.remove(fileName);

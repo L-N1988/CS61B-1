@@ -7,13 +7,15 @@ import java.util.Set;
 
 import static gitlet.RepoUtils.readBlob;
 
-/** Represents a gitlet commit object.
- *  @author Christina0031
+/**
+ * Represents a gitlet commit object.
+ *
+ * @author Christina0031
  */
 public class Commit implements Serializable {
 
     private static final long serialVersionUID = 3339685098267757691L;
-    /** The message of this Commit. */
+
     private String message;
     private Date timestamp;
     private Map<String, String> files;
@@ -28,10 +30,7 @@ public class Commit implements Serializable {
     }
 
     public Commit(String msg, Map<String, String> files, String parent) {
-        this.files = files;
-        this.timestamp = new Date();
-        this.message = msg;
-        this.parent = parent;
+        this(msg, new Date(), files, parent);
     }
 
     public Commit(String msg, Map<String, String> files, String parent, String secondParent) {
@@ -80,12 +79,15 @@ public class Commit implements Serializable {
     public String getSecondParent() {
         return this.secondParent;
     }
+
     public boolean hasSecondParent() {
         return this.parent != null && this.secondParent != null;
     }
+
     public boolean hasParent() {
-        return this.parent != null || this.secondParent != null;
+        return this.parent != null;
     }
+
     public void restoreFile(String fileName) {
         if (!contain(fileName)) {
             Utils.message("File does not exist in that commit.");

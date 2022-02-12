@@ -48,8 +48,9 @@ public class Repository {
         }
         Branch curr = getCurrBranch();
         String commitID = curr.getCommitID();
-        Commit lastCommit = getCommitFromID(commitID);
-        String newCommit = makeCommit(message, getCommitFileSet(stagingArea, lastCommit), commitID);
+        Commit lastCommit = getCommit(commitID);
+        String newCommit = makeCommit(
+                message, getFileSetToBeCommitted(stagingArea, lastCommit), commitID);
 
         cleanStagingArea(stagingArea);
         changeBranch(curr, newCommit);
@@ -59,7 +60,7 @@ public class Repository {
         validDirectory();
         StagingArea stagingArea = getStagingArea();
         Commit lastCommit = getLastCommit();
-        if (stagingArea.contain(fileName)) {
+        if (stagingArea.willBeAddedOrModified(fileName)) {
             stagingArea.delete(fileName);
             saveStagingArea(stagingArea);
         } else if (lastCommit.contain(fileName)) {
@@ -96,7 +97,7 @@ public class Repository {
         boolean found = false;
         List<String> commits = Utils.plainFilenamesIn(GITLET_DIR + SLASH + "commits");
         for (String commitID : commits) {
-            Commit commit = getCommitFromID(commitID);
+            Commit commit = getCommit(commitID);
             if (commit.getMessage().equals(message)) {
                 Utils.message(commitID);
                 found = true;
@@ -141,14 +142,14 @@ public class Repository {
         validDirectory();
         StagingArea stagingArea = getStagingArea();
         if (args.length == 2) {
-            Branch dest = getBranchFromName(args[1]);
+            Branch dest = getBranch(args[1]);
             Branch curr = getCurrBranch();
             if (dest.getName().equals(curr.getName())) {
                 Utils.message("No need to checkout the current branch.");
                 System.exit(0);
             }
-            Commit commit = getCommitFromID(dest.getCommitID());
-            setCommit(commit);
+            Commit commit = getCommit(dest.getCommitID());
+            restoreCommit(commit);
             cleanStagingArea(stagingArea);
             changeHEAD(dest.getName());
             return;
@@ -160,7 +161,7 @@ public class Repository {
             commit = getLastCommit();
         } else if (args.length == 4 && args[2].equals("--")) {
             fileName = args[3];
-            commit = getCommitFromID(args[1]);
+            commit = getCommit(args[1]);
         } else {
             Utils.message("Incorrect operands.");
             System.exit(0);
@@ -172,12 +173,8 @@ public class Repository {
 
     public static void branch(String name) {
         validDirectory();
-        String fileName = name;
-        if (name.contains("/")) {
-            fileName = sha1(name);
-        }
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
-        if (branchName.exists()) {
+        File f = getBranchFile(GITLET_DIR, name);
+        if (f.exists()) {
             Utils.message("A branch with that name already exists.");
             System.exit(0);
         }
@@ -187,12 +184,8 @@ public class Repository {
 
     public static void rmBranch(String name) {
         validDirectory();
-        String fileName = name;
-        if (name.contains("/")) {
-            fileName = sha1(name);
-        }
-        File branchName = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
-        if (!branchName.exists()) {
+        File f = getBranchFile(GITLET_DIR, name);
+        if (!f.exists()) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
         }
@@ -207,11 +200,11 @@ public class Repository {
     public static void reset(String commitID) {
         validDirectory();
         Branch curr = getCurrBranch();
-        Commit commit = getCommitFromID(commitID);
-        setCommit(commit);
+        Commit commit = getCommit(commitID);
+        restoreCommit(commit);
         StagingArea stagingArea = getStagingArea();
         List<String> allFiles = Utils.plainFilenamesIn(CWD);
-        Set<String> set = stagingArea.getKeys();
+        Set<String> set = stagingArea.getFilenameSet();
         for (String s : set) {
             if (!allFiles.contains(s)) {
                 stagingArea.delete(s);
@@ -235,16 +228,12 @@ public class Repository {
             Utils.message("You have uncommitted changes.");
             System.exit(0);
         }
-        String fileName = branchName;
-        if (branchName.contains("/")) {
-            fileName = sha1(branchName);
-        }
-        File file = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
-        if (!file.exists()) {
+        File f = getBranchFile(GITLET_DIR, branchName);
+        if (!f.exists()) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
         }
-        Branch given = Utils.readObject(file, Branch.class);
+        Branch given = Utils.readObject(f, Branch.class);
         Branch curr = getCurrBranch();
         if (curr.getName().equals(given.getName())) {
             Utils.message("Cannot merge a branch with itself.");
@@ -258,7 +247,7 @@ public class Repository {
         }
 
         String splitPointID = splitPoint(curr, given);
-        Commit lastCommit = getCommitFromID(curr.getCommitID());
+        Commit lastCommit = getCommit(curr.getCommitID());
         boolean conflict = processFiles(splitPointID, lastCommit, given, stagingArea);
 
         String message = "Merged " + given.getName() + " into " + curr.getName() + ".";
@@ -271,12 +260,14 @@ public class Repository {
         }
 
         String newCommit = makeMergeCommit(message,
-                getCommitFileSet(stagingArea, lastCommit), curr.getCommitID(), given.getCommitID());
+                getFileSetToBeCommitted(stagingArea, lastCommit),
+                curr.getCommitID(), given.getCommitID());
         cleanStagingArea(stagingArea);
         changeBranch(curr, newCommit);
     }
 
     public static void addRemote(String remoteName, String directory) {
+        validDirectory();
         File dir = new File(GITLET_DIR + SLASH + "remotes");
         if (!dir.exists()) {
             dir.mkdirs();
@@ -293,6 +284,7 @@ public class Repository {
     }
 
     public static void rmRemote(String remoteName) {
+        validDirectory();
         File file = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
         if (!file.exists()) {
             Utils.message("A remote with that name does not exist.");
@@ -303,70 +295,49 @@ public class Repository {
     }
 
     public static void push(String remoteName, String remoteBranchName) {
-        File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
-        if (!f.exists()) {
-            Utils.message("A remote with that name already exists.");
-            System.exit(0);
+        validDirectory();
+        File remoteGitlet = getGitletDir(remoteName);
+        String localHead = getCurrBranch().getCommitID();
+        Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
+        if (remoteBranch == null) {
+            copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, null, localHead);
+            createRemoteBranch(remoteGitlet, remoteBranchName, localHead);
         } else {
-            Remote remote = readObject(f, Remote.class);
-            String remoteDirectory = remote.getDirectory();
-            File remoteGitlet = new File(remoteDirectory);
-            if (!remoteGitlet.exists()) {
-                Utils.message("Remote directory not found.");
-                System.exit(0);
-            }
-
-            String localHead = getCurrBranch().getCommitID();
-            Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
-            if (remoteBranch == null) {
-                copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, null, localHead);
-                createRemoteBranch(remoteGitlet, remoteBranchName, localHead);
+            String remoteHead = remoteBranch.getCommitID();
+            if (isHistory(localHead, remoteHead)) {
+                copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, remoteHead, localHead);
+                changeRemoteBranch(remoteGitlet, remoteBranch, localHead);
             } else {
-                String remoteHead = remoteBranch.getCommitID();
-                if (isHistory(localHead, remoteHead)) {
-                    copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, remoteHead, localHead);
-                    changeRemoteBranch(remoteGitlet, remoteBranch, localHead);
-                } else {
-                    Utils.message("Please pull down remote changes before pushing.");
-                    System.exit(0);
-                }
+                Utils.message("Please pull down remote changes before pushing.");
+                System.exit(0);
             }
         }
     }
 
     public static void fetch(String remoteName, String remoteBranchName) {
+        validDirectory();
         String branchName = remoteName + "/" + remoteBranchName;
-        File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
-        if (!f.exists()) {
-            Utils.message("A remote with that name does not exist.");
+        File remoteGitlet = getGitletDir(remoteName);
+
+        Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
+        if (remoteBranch == null) {
+            Utils.message("That remote does not have that branch.");
             System.exit(0);
         } else {
-            Remote remote = readObject(f, Remote.class);
-            String remoteDirectory = remote.getDirectory();
-            File remoteGitlet = new File(remoteDirectory);
-            if (!remoteGitlet.exists()) {
-                Utils.message("Remote directory not found.");
-                System.exit(0);
-            }
-            Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
-            if (remoteBranch == null) {
-                Utils.message("That remote does not have that branch.");
-                System.exit(0);
+            String id = remoteBranch.getCommitID();
+            copyCommitsAndBlobs(remoteGitlet, GITLET_DIR, null, id);
+            String fileName = sha1(branchName);
+            File b = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
+            if (!b.exists()) {
+                createBranch(branchName, id);
             } else {
-                String id = remoteBranch.getCommitID();
-                copyCommitsAndBlobs(remoteGitlet, GITLET_DIR, null, id);
-                String fileName = sha1(branchName);
-                File b = new File(GITLET_DIR + SLASH + "branches" + SLASH + fileName);
-                if (!b.exists()) {
-                    createBranch(branchName, id);
-                } else {
-                    changeBranch(getBranchFromName(branchName), id);
-                }
+                changeBranch(getBranch(branchName), id);
             }
         }
     }
 
     public static void pull(String remoteName, String remoteBranchName) {
+        validDirectory();
         fetch(remoteName, remoteBranchName);
         merge(remoteName + "/" + remoteBranchName);
     }

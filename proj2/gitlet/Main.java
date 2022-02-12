@@ -3,7 +3,7 @@ package gitlet;
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
- * @author TODO
+ * @author Christina0031
  */
 public class Main {
 
@@ -97,10 +97,7 @@ public class Main {
     }
 
     public static void validateNumArgs(String[] args, int n, String msg) {
-        if (args.length != n) {
-            Utils.message(msg);
-            System.exit(0);
-        }
+        validateNumArgs(args, n, n, msg);
     }
 
     public static void validateNumArgs(String[] args, int low, int high, String msg) {
