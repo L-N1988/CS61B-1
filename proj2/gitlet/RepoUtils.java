@@ -1,11 +1,16 @@
 package gitlet;
 
+import com.sun.xml.internal.ws.addressing.WsaTubeHelperImpl;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static gitlet.Repository.checkout;
 import static gitlet.Utils.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class RepoUtils {
     /**
@@ -57,6 +62,14 @@ public class RepoUtils {
         return branch;
     }
 
+
+    static Branch createRemoteBranch(File remoteGitlet, String name, String pointTo) {
+        Branch branch = new Branch(name, pointTo);
+        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        Utils.writeObject(f, branch);
+        return branch;
+    }
+
     static Branch createHEAD(String pointTo) {
         Branch head = new Branch(pointTo);
         File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + "HEAD");
@@ -76,12 +89,28 @@ public class RepoUtils {
         return getBranchFromName(headBranch);
     }
 
+    static Branch getRemoteBranch(File remoteGitlet, String remoteBranchName) {
+        File branchName = new File(remoteGitlet + SLASH + "branches" + SLASH + remoteBranchName);
+        if (!branchName.exists()) {
+            return null;
+        }
+        return Utils.readObject(branchName, Branch.class);
+    }
+
     static Branch changeBranch(Branch branch, String commit) {
         branch.changeTo(commit);
         File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + branch.getName());
         Utils.writeObject(f, branch);
         return branch;
     }
+
+    static Branch changeRemoteBranch(File remoteGitlet, Branch branch, String commit) {
+        branch.changeTo(commit);
+        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + branch.getName());
+        Utils.writeObject(f, branch);
+        return branch;
+    }
+
 
     static void removeBranch(String name) {
         File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
@@ -386,52 +415,43 @@ public class RepoUtils {
         for (String s : givenFiles.keySet()) {
             boolean split = splitFiles.containsKey(s);
             boolean cur = currFiles.containsKey(s);
-            if (cur) {
-                if (split && equal(splitFiles, currFiles, s) && !equal(splitFiles, givenFiles, s)) {
-                    String[] args = {"checkout", given.getCommitID(), "--", s};
-                    checkout(args);
-                    stagingArea.add(s, lastCommit);
-                } else if (split && !equal(givenFiles, currFiles, s)
-                        && !equal(givenFiles, splitFiles, s)
-                        && !equal(currFiles, splitFiles, s)) {
-                    handleConflict(currFiles, givenFiles, s);
-                    conflict = true;
-                    stagingArea.add(s, lastCommit);
-                } else if (!split && !equal(givenFiles, currFiles, s)) {
-                    handleConflict(currFiles, givenFiles, s);
-                    conflict = true;
-                    stagingArea.add(s, lastCommit);
+            boolean onlyModifiedInGiven = cur && split && equal(splitFiles, currFiles, s)
+                    && !equal(splitFiles, givenFiles, s);
+            boolean addedInGiven = !split && !cur;
+            boolean allDiff = cur && split && !equal(givenFiles, currFiles, s)
+                    && !equal(givenFiles, splitFiles, s) && !equal(currFiles, splitFiles, s);
+            boolean addedDiff = cur && !split && !equal(givenFiles, currFiles, s);
+            boolean delInCurAndModifiedInGiven = !cur && split && !equal(splitFiles, givenFiles, s);
+            boolean delInCur = !cur && split && equal(splitFiles, givenFiles, s);
+            if (onlyModifiedInGiven || addedInGiven) {
+                String[] args = {"checkout", given.getCommitID(), "--", s};
+                checkout(args);
+                stagingArea.add(s, lastCommit);
+            } else if (allDiff || addedDiff || delInCurAndModifiedInGiven) {
+                handleConflict(currFiles, givenFiles, s);
+                conflict = true;
+                stagingArea.add(s, lastCommit);
+            } else if (delInCur) {
+                File f = new File(s);
+                if (f.exists()) {
+                    f.delete();
                 }
-            } else {
-                if (!split) {
-                    String[] args = {"checkout", given.getCommitID(), "--", s};
-                    checkout(args);
-                    stagingArea.add(s, lastCommit);
-                } else if (split && !equal(givenFiles, splitFiles, s)) {
-                    handleConflict(currFiles, givenFiles, s);
-                    conflict = true;
-                    stagingArea.add(s, lastCommit);
-                } else if (split && equal(splitFiles, givenFiles, s)) {
-                    File f = new File(s);
-                    if (f.exists()) {
-                        f.delete();
-                    }
-                    stagingArea.delete(s);
-                }
+                stagingArea.delete(s);
+                stagingArea.addRemovedFiles(s);
             }
         }
         for (String s : currFiles.keySet()) {
             boolean split = splitFiles.containsKey(s);
             boolean give = givenFiles.containsKey(s);
-            if (!give) {
-                if (split && equal(splitFiles, currFiles, s)) {
+            if (!give && split) {
+                if (equal(splitFiles, currFiles, s)) {
                     File f = new File(s);
                     if (f.exists()) {
                         f.delete();
                     }
                     stagingArea.delete(s);
                     stagingArea.addRemovedFiles(s);
-                } else if (split && !equal(currFiles, splitFiles, s)) {
+                } else {
                     handleConflict(currFiles, givenFiles, s);
                     conflict = true;
                     stagingArea.add(s, lastCommit);
@@ -440,4 +460,51 @@ public class RepoUtils {
         }
         return conflict;
     }
+
+
+    static boolean isHistory(String commitID, String objectID) {
+        if (commitID.equals(objectID)) {
+            return true;
+        }
+        Commit c = getCommitFromID(commitID);
+        if (c.hasSecondParent()) {
+            return isHistory(c.getParent(), objectID) || isHistory(c.getSecondParent(), objectID);
+        } else if (c.hasParent()) {
+            return isHistory(c.getParent(), objectID);
+        } else {
+            return false;
+        }
+    }
+
+    static void copyCommitsAndBlobs(File from, File to, String endCommit, String startCommit) throws IOException {
+        Queue<String> commits = new ArrayDeque<>();
+        commits.add(startCommit);
+        while (!commits.isEmpty()) {
+            String commitID = commits.remove();
+
+            if (commitID == null || commitID.equals(endCommit)) {
+                continue;
+            }
+            Commit commit = getCommitFromID(commitID);
+            File f = new File(from + SLASH + "commits" + SLASH + commitID);
+            File t = new File(to + SLASH + "commits" + SLASH + commitID);
+            if (!t.exists()) {
+                Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                for (String s : commit.getFiles().values()) {
+                    f = new File(from + SLASH + "blobs" + SLASH + s);
+                    t = new File(to + SLASH + "blobs" + SLASH + s);
+                    if (!t.exists()) {
+                        Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                    }
+                }
+            }
+            if (commit.hasSecondParent()) {
+                commits.add(commit.getParent());
+                commits.add(commit.getSecondParent());
+            } else if (commit.hasParent()) {
+                commits.add(commit.getParent());
+            }
+        }
+    }
+
 }

@@ -66,9 +66,7 @@ public class StagingArea implements Serializable {
                 }
                 writeBlob(contents, fileID);
             }
-
         }
-
     }
 
     public void delete(String fileName) {

@@ -1,9 +1,11 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static gitlet.RepoUtils.*;
+import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
@@ -246,7 +248,6 @@ public class Repository {
 
         String splitPointID = splitPoint(curr, given);
         Commit lastCommit = getCommitFromID(curr.getCommitID());
-
         boolean conflict = processFiles(splitPointID, lastCommit, given, stagingArea);
 
         String message = "Merged " + given.getName() + " into " + curr.getName() + ".";
@@ -260,13 +261,102 @@ public class Repository {
 
         String newCommit = makeMergeCommit(message,
                 getCommitFileSet(stagingArea, lastCommit), curr.getCommitID(), given.getCommitID());
-
         cleanStagingArea(stagingArea);
         changeBranch(curr, newCommit);
     }
 
     public static void addRemote(String remoteName, String directory) {
+        File dir = new File(GITLET_DIR + SLASH + "remotes");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File file = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
+        if (!file.exists()) {
+            Remote remote = new Remote(directory);
+            byte[] serialized = Utils.serialize(remote);
+            Utils.writeContents(file, serialized);
+        } else {
+            Utils.message("A remote with that name already exists.");
+            System.exit(0);
+        }
+    }
 
+    public static void rmRemote(String remoteName) {
+        File file = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
+        if (!file.exists()) {
+            Utils.message("A remote with that name does not exist.");
+            System.exit(0);
+        } else {
+            file.delete();
+        }
+    }
+
+    public static void push(String remoteName, String remoteBranchName) throws IOException {
+        File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
+        if (!f.exists()) {
+            Utils.message("A remote with that name already exists.");
+            System.exit(0);
+        } else {
+            Remote remote = readObject(f, Remote.class);
+            String remoteDirectory = remote.getDirectory();
+            File remoteGitlet = new File(remoteDirectory);
+            if (!remoteGitlet.exists()) {
+                Utils.message("Remote directory not found.");
+                System.exit(0);
+            }
+
+            String localHead = getCurrBranch().getCommitID();
+            Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
+            if (remoteBranch == null) {
+                copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, null, localHead);
+                createRemoteBranch(remoteGitlet, remoteBranchName, localHead);
+            } else {
+                String remoteHead = remoteBranch.getCommitID();
+                if (isHistory(localHead, remoteHead)) {
+                    copyCommitsAndBlobs(GITLET_DIR, remoteGitlet, remoteHead, localHead);
+                    changeRemoteBranch(remoteGitlet, remoteBranch, localHead);
+                } else {
+                    Utils.message("Please pull down remote changes before pushing.");
+                    System.exit(0);
+                }
+            }
+        }
+    }
+
+    public static void fetch(String remoteName, String remoteBranchName) throws IOException {
+        String branchName = remoteName + "/" + remoteBranchName;
+        File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
+        if (!f.exists()) {
+            Utils.message("A remote with that name does not exist.");
+            System.exit(0);
+        } else {
+            Remote remote = readObject(f, Remote.class);
+            String remoteDirectory = remote.getDirectory();
+            File remoteGitlet = new File(remoteDirectory);
+            if (!remoteGitlet.exists()) {
+                Utils.message("Remote directory not found.");
+                System.exit(0);
+            }
+            Branch remoteBranch = getRemoteBranch(remoteGitlet, remoteBranchName);
+            if (remoteBranch == null) {
+                Utils.message("That remote does not have that branch.");
+                System.exit(0);
+            } else {
+                String id = remoteBranch.getCommitID();
+                copyCommitsAndBlobs(remoteGitlet, GITLET_DIR, null, id);
+                createBranch(branchName, id);
+                changeHEAD(branchName);
+            }
+        }
+
+    }
+
+    public static void pull(String remoteName, String remoteBranchName) throws IOException {
+        Branch curr = getCurrBranch();
+        fetch(remoteName, remoteBranchName);
+        String[] args = {"checkout", curr.getName()};
+        checkout(args);
+        merge(remoteName + "/" + remoteBranchName);
     }
 }
 

@@ -1,6 +1,8 @@
 package gitlet;
 
 
+import java.io.IOException;
+
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
@@ -12,7 +14,7 @@ public class Main {
      * Usage: java gitlet.Main ARGS, where ARGS contains
      * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             Utils.message("Please enter a command.");
             System.exit(0);
@@ -74,6 +76,22 @@ public class Main {
             case "add-remote":
                 validateNumArgs(args, 3, "Incorrect operands.");
                 Repository.addRemote(args[1], args[2]);
+                break;
+            case "rm-remote":
+                validateNumArgs(args, 2, "Incorrect operands.");
+                Repository.rmRemote(args[1]);
+                break;
+            case "push":
+                validateNumArgs(args, 3, "Incorrect operands.");
+                Repository.push(args[1], args[2]);
+                break;
+            case "fetch":
+                validateNumArgs(args, 3, "Incorrect operands.");
+                Repository.fetch(args[1], args[2]);
+                break;
+            case "pull":
+                validateNumArgs(args, 3, "Incorrect operands.");
+                Repository.pull(args[1], args[2]);
                 break;
             default:
                 Utils.message("No command with that name exists.");
