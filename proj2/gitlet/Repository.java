@@ -1,7 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static gitlet.RepoUtils.*;
@@ -291,7 +290,7 @@ public class Repository {
         }
     }
 
-    public static void push(String remoteName, String remoteBranchName) throws IOException {
+    public static void push(String remoteName, String remoteBranchName) {
         File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
         if (!f.exists()) {
             Utils.message("A remote with that name already exists.");
@@ -323,7 +322,7 @@ public class Repository {
         }
     }
 
-    public static void fetch(String remoteName, String remoteBranchName) throws IOException {
+    public static void fetch(String remoteName, String remoteBranchName) {
         String branchName = remoteName + "/" + remoteBranchName;
         File f = new File(GITLET_DIR + SLASH + "remotes" + SLASH + remoteName);
         if (!f.exists()) {
@@ -351,7 +350,7 @@ public class Repository {
 
     }
 
-    public static void pull(String remoteName, String remoteBranchName) throws IOException {
+    public static void pull(String remoteName, String remoteBranchName) {
         Branch curr = getCurrBranch();
         fetch(remoteName, remoteBranchName);
         String[] args = {"checkout", curr.getName()};

@@ -474,7 +474,7 @@ public class RepoUtils {
         }
     }
 
-    static void copyCommitsAndBlobs(File from, File to, String endCommit, String startCommit) throws IOException {
+    static void copyCommitsAndBlobs(File from, File to, String endCommit, String startCommit) {
         Queue<String> commits = new ArrayDeque<>();
         commits.add(startCommit);
         while (!commits.isEmpty()) {
@@ -487,13 +487,18 @@ public class RepoUtils {
             File f = new File(from + SLASH + "commits" + SLASH + commitID);
             File t = new File(to + SLASH + "commits" + SLASH + commitID);
             if (!t.exists()) {
-                Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
-                for (String s : commit.getFiles().values()) {
-                    f = new File(from + SLASH + "blobs" + SLASH + s);
-                    t = new File(to + SLASH + "blobs" + SLASH + s);
-                    if (!t.exists()) {
-                        Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                try {
+                    Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                    for (String s : commit.getFiles().values()) {
+                        f = new File(from + SLASH + "blobs" + SLASH + s);
+                        t = new File(to + SLASH + "blobs" + SLASH + s);
+                        if (!t.exists()) {
+                            Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                        }
                     }
+                } catch (IOException e) {
+                    System.out.println(e);
+                    System.exit(0);
                 }
             }
             if (commit.hasSecondParent()) {
