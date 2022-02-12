@@ -63,7 +63,7 @@ public class RepoUtils {
 
     static Branch createRemoteBranch(File remoteGitlet, String name, String pointTo) {
         Branch branch = new Branch(name, pointTo);
-        File f = new File(GITLET_DIR + SLASH + "branches" + SLASH + name);
+        File f = new File(remoteGitlet + SLASH + "branches" + SLASH + name);
         Utils.writeObject(f, branch);
         return branch;
     }
@@ -479,16 +479,15 @@ public class RepoUtils {
         commits.add(startCommit);
         while (!commits.isEmpty()) {
             String commitID = commits.remove();
-
             if (commitID == null || commitID.equals(endCommit)) {
                 continue;
             }
-            Commit commit = getCommitFromID(commitID);
             File f = new File(from + SLASH + "commits" + SLASH + commitID);
             File t = new File(to + SLASH + "commits" + SLASH + commitID);
             if (!t.exists()) {
                 try {
                     Files.copy(f.toPath(), t.toPath(), REPLACE_EXISTING);
+                    Commit commit = getCommitFromID(commitID);
                     for (String s : commit.getFiles().values()) {
                         f = new File(from + SLASH + "blobs" + SLASH + s);
                         t = new File(to + SLASH + "blobs" + SLASH + s);
@@ -501,6 +500,7 @@ public class RepoUtils {
                     System.exit(0);
                 }
             }
+            Commit commit = getCommitFromID(commitID);
             if (commit.hasSecondParent()) {
                 commits.add(commit.getParent());
                 commits.add(commit.getSecondParent());

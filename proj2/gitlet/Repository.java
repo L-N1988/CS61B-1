@@ -343,18 +343,19 @@ public class Repository {
             } else {
                 String id = remoteBranch.getCommitID();
                 copyCommitsAndBlobs(remoteGitlet, GITLET_DIR, null, id);
-                createBranch(branchName, id);
-                changeHEAD(branchName);
+                File b = new File(GITLET_DIR + SLASH + "branches" + SLASH + branchName);
+                if (!b.exists()) {
+                    createBranch(branchName, id);
+                } else {
+                    changeBranch(getBranchFromName(branchName), id);
+                }
             }
         }
 
     }
 
     public static void pull(String remoteName, String remoteBranchName) {
-        Branch curr = getCurrBranch();
         fetch(remoteName, remoteBranchName);
-        String[] args = {"checkout", curr.getName()};
-        checkout(args);
         merge(remoteName + "/" + remoteBranchName);
     }
 }
